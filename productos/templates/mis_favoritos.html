@@ -3,61 +3,54 @@
 {% block content %}
 
 <style>
-  /* Contenedor centrado y con max width */
-  .productos-container {
+  .favoritos-container {
     max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
   }
 
-  /* Grid flexible con gap */
-  .productos-grid {
+  .favoritos-titulo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+  }
+
+  .favoritos-grid {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 1.5rem;
+    justify-content: center;
   }
 
-  /* Cards estilo Eneba */
-  .card-eneba {
-    width: 250px;
+  .card-favorito {
+    width: 260px;
     border-radius: 1rem;
-    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    background-color: #fff;
+    overflow: hidden;
     position: relative;
-    background: #fff;
+    display: flex;
+    flex-direction: column;
   }
 
-  .card-eneba:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgb(0 0 0 / 0.15);
-  }
-
-  /* Imagen */
-  .card-eneba img {
+  .card-favorito img {
     width: 100%;
-    height: 160px;
+    height: 180px;
     object-fit: cover;
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-    user-select: none;
   }
 
-  /* Botón favorito */
   .favorito-btn {
     position: absolute;
     top: 12px;
     right: 12px;
-    z-index: 3;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.9);
     border: none;
+    border-radius: 50%;
+    padding: 0.4rem;
+    cursor: pointer;
     transition: background-color 0.3s ease;
   }
 
@@ -65,125 +58,88 @@
     background-color: #ffe6e6;
   }
 
-  .favorito-btn i {
-    font-size: 1.3rem;
-    color: #dc3545;
-    transition: color 0.3s ease;
-  }
-
-  /* Card body */
-  .card-body {
-    padding: 1rem 1.2rem;
-    text-align: center;
-    font-family: 'Roboto', sans-serif;
-  }
-
-  .card-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-bottom: 0.2rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .card-subtitle {
-    font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.6rem;
-    color: #212529;
-  }
-
-  .price {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #2ecc71;
-  }
-
-  /* Estilos formulario filtros */
-  .filtros-form {
-    max-width: 1200px;
-    margin: 1rem auto;
+  .card-favorito .card-body {
     padding: 1rem;
     display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    flex-grow: 1;
   }
 
-  .filtros-form input,
-  .filtros-form select {
-    padding: 0.5rem;
+  .card-favorito .marca {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .card-favorito .nombre {
     font-size: 1rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
   }
 
-  .filtros-form button {
+  .card-favorito .descripcion {
+    font-size: 0.9rem;
+    color: #555;
+    flex-grow: 1;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-favorito .precio {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2ecc71;
+    margin-bottom: 1rem;
+  }
+
+  .card-favorito .btn-carrito {
     background-color: #2ecc71;
     border: none;
     color: white;
-    padding: 0.6rem 1.2rem;
+    padding: 0.5rem 0.8rem;
     border-radius: 0.4rem;
-    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
   }
 
-  .filtros-form button:hover {
+  .card-favorito .btn-carrito:hover {
     background-color: #27ae60;
   }
 </style>
-<div class="container mt-5">
-  <h2 class="mb-4 text-center">Mis Favoritos</h2>
-  <div class="row row-cols-1 row-cols-md-3 g-4" id="favoritos-lista">
+
+<div class="favoritos-container">
+  <h2 class="favoritos-titulo">Mis Productos Favoritos</h2>
+
+  <div class="favoritos-grid" id="favoritos-lista">
     {% for favorito in favoritos %}
-    <div class="col">
-      <div class="card shadow rounded-4 border-0 h-100 position-relative">
-        <a href="{% url 'producto_detalle' favorito.producto.id %}">
-          {% if favorito.producto.imagen %}
-          <img
-            src="{{ favorito.producto.imagen.url }}"
-            class="card-img-top rounded-top-4"
-            alt="{{ favorito.producto.nombre }}"
-            style="height: 220px; object-fit: cover;"
-          />
-          {% else %}
-          <img
-            src="{% static 'img/placeholder.png' %}"
-            class="card-img-top rounded-top-4"
-            alt="Sin imagen"
-            style="height: 220px; object-fit: cover;"
-          />
-          {% endif %}
-        </a>
+    <div class="card-favorito">
+      {% if favorito.producto.imagen %}
+      <a href="{% url 'producto_detalle' favorito.producto.id %}">
+        <img src="{{ favorito.producto.imagen.url }}" alt="{{ favorito.producto.nombre }}">
+      </a>
+      {% else %}
+      <a href="{% url 'producto_detalle' favorito.producto.id %}">
+        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+      </a>
+      {% endif %}
 
-        <!-- Botón favorito -->
-        <button
-          class="btn p-0 border-0 bg-transparent favorito-btn position-absolute top-0 end-0 m-3"
-          data-producto="{{ favorito.producto.id }}"
-          title="Quitar de favoritos"
-          aria-label="Quitar de favoritos"
-        >
-          <i class="bi bi-heart-fill text-danger" style="font-size: 1.5rem"></i>
-        </button>
+      <button class="favorito-btn" data-producto="{{ favorito.producto.id }}" title="Quitar de favoritos">
+        <i class="bi bi-heart-fill text-danger" style="font-size: 1.3rem;"></i>
+      </button>
 
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title fw-semibold text-primary mb-2">{{ favorito.producto.marca }}</h5>
-          <h6 class="card-subtitle mb-2 text-muted">{{ favorito.producto.nombre }}</h6>
-          <p class="card-text flex-grow-1">{{ favorito.producto.descripcion|truncatewords:20 }}</p>
-          <div class="fs-5 text-success fw-bold mb-3">${{ favorito.producto.precio }}</div>
-          <a
-            href="{% url 'agregar_al_carrito' favorito.producto.id %}"
-            class="btn btn-primary"
-          >
-            Agregar al carrito
-          </a>
-        </div>
+      <div class="card-body">
+        <div class="marca">{{ favorito.producto.marca }}</div>
+        <div class="nombre">{{ favorito.producto.nombre }}</div>
+        <div class="descripcion">{{ favorito.producto.descripcion|truncatewords:18 }}</div>
+        <div class="precio">${{ favorito.producto.precio }}</div>
+        <a href="{% url 'agregar_al_carrito' favorito.producto.id %}" class="btn-carrito">Agregar al carrito</a>
       </div>
     </div>
     {% empty %}
-    <div class="col-12" id="no-favoritos-msg">
-      <div class="alert alert-info text-center">
-        No tienes productos favoritos.
-      </div>
+    <div class="w-100 text-center mt-4">
+      <div class="alert alert-info">No tienes productos favoritos.</div>
     </div>
     {% endfor %}
   </div>
@@ -206,12 +162,12 @@
           .then((response) => response.json())
           .then((data) => {
             if (!data.es_favorito) {
-              this.closest(".col").remove();
-              if (document.querySelectorAll("#favoritos-lista .col").length === 0) {
+              this.closest(".card-favorito").remove();
+              if (document.querySelectorAll(".card-favorito").length === 0) {
                 const msg = document.createElement("div");
-                msg.className = "col-12";
+                msg.className = "w-100 text-center mt-4";
                 msg.innerHTML =
-                  '<div class="alert alert-info text-center">No tienes productos favoritos.</div>';
+                  '<div class="alert alert-info">No tienes productos favoritos.</div>';
                 document.getElementById("favoritos-lista").appendChild(msg);
               }
             }
@@ -235,5 +191,7 @@
     }
   });
 </script>
+
 {% endblock %}
+
 

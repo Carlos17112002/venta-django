@@ -418,29 +418,56 @@ def perfil_usuario(request):
 
 
 def marcas(request):
-    # Obtener la marca seleccionada (si existe)
-    marca_seleccionada = request.GET.get('marca')
+    q = request.GET.get('q', '').strip()
+    marca = request.GET.get('marca', '')
+    precio_min = request.GET.get('precio_min')
+    precio_max = request.GET.get('precio_max')
+    categoria = request.GET.get('categoria', '')
 
-    # Obtener todas las marcas con el conteo de productos
+    productos = Producto.objects.all()
+
+    if categoria:
+        productos = productos.filter(categoria__iexact=categoria)
+
+    if q:
+        productos = productos.filter(nombre__icontains=q)
+
+    if marca:
+        productos = productos.filter(marca__iexact=marca)
+
+    if precio_min:
+        try:
+            productos = productos.filter(precio__gte=float(precio_min))
+        except ValueError:
+            pass
+
+    if precio_max:
+        try:
+            productos = productos.filter(precio__lte=float(precio_max))
+        except ValueError:
+            pass
+
+    # Obtener marcas para el filtro lateral
     marcas = Producto.objects.values('marca')\
         .annotate(total=Count('id'))\
         .order_by('marca')
 
-    # Obtener productos, filtrando por marca si se seleccionó alguna
-    productos = Producto.objects.all()
-    if marca_seleccionada:
-        productos = productos.filter(marca=marca_seleccionada)
-
-    # Obtener lista de favoritos para el usuario autenticado
     favoritos_ids = []
     if request.user.is_authenticated:
         favoritos_ids = list(request.user.favoritos.values_list('producto_id', flat=True))
 
-    # Renderizar plantilla con el contexto completo
+    filtros = {
+        'q': q,
+        'marca': marca,
+        'precio_min': precio_min,
+        'precio_max': precio_max,
+        'categoria': categoria,
+    }
+
     return render(request, 'marcas.html', {
-        'marcas': marcas,
-        'marca_seleccionada': marca_seleccionada,
         'productos': productos,
+        'marcas': marcas,
+        'filtros': filtros,
         'favoritos_ids': favoritos_ids,
     })
 

@@ -13,6 +13,7 @@
         <div class="card-body p-4">
 
           <form method="post" action="{% url 'procesar_checkout' %}">
+
             {% csrf_token %}
 
             <!-- Tipo de entrega -->

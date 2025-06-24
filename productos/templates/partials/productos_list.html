@@ -1,31 +1,33 @@
 {% load static %}
 
-{% for producto in productos %}
-  <div class="card-eneba">
-    {% if user.is_authenticated %}
-    <button class="favorito-btn" data-producto="{{ producto.id }}" title="Favorito" aria-label="Favorito">
-      {% if producto.id in favoritos_ids %}
-      <i class="bi bi-heart-fill"></i>
-      {% else %}
-      <i class="bi bi-heart" style="color: #888;"></i>
+<div class="productos-grid">
+  {% for producto in productos %}
+    <div class="card-eneba">
+      {% if user.is_authenticated %}
+      <button class="favorito-btn" data-producto="{{ producto.id }}" title="Favorito" aria-label="Favorito">
+        {% if producto.id in favoritos_ids %}
+        <i class="bi bi-heart-fill"></i>
+        {% else %}
+        <i class="bi bi-heart" style="color: #888;"></i>
+        {% endif %}
+      </button>
       {% endif %}
-    </button>
-    {% endif %}
 
-    <a href="{% url 'producto_detalle' producto.id %}">
-      {% if producto.imagen %}
-      <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-      {% else %}
-      <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-      {% endif %}
-    </a>
+      <a href="{% url 'producto_detalle' producto.id %}">
+        {% if producto.imagen %}
+        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+        {% else %}
+        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+        {% endif %}
+      </a>
 
-    <div class="card-body">
-      <h6 class="card-title">{{ producto.marca }}</h6>
-      <h5 class="card-subtitle">{{ producto.nombre }}</h5>
-      <div class="price">${{ producto.precio }}</div>
+      <div class="card-body">
+        <h6 class="card-title">{{ producto.marca }}</h6>
+        <h5 class="card-subtitle">{{ producto.nombre }}</h5>
+        <div class="price">${{ producto.precio }}</div>
+      </div>
     </div>
-  </div>
-{% empty %}
-  <p>No hay productos disponibles.</p>
-{% endfor %}
+  {% empty %}
+    <p>No hay productos disponibles.</p>
+  {% endfor %}
+</div>
