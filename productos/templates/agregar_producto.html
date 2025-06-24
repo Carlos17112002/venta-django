@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white text-center">
+      <h2 class="mb-0">Agregar Producto</h2>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="mb-3">
+          {{ form.nombre.label_tag }} {{ form.nombre }}
+        </div>
+        <div class="mb-3">
+          {{ form.categoria.label_tag }} {{ form.categoria }}
+        </div>
+        <div class="mb-3">
+          {{ form.precio.label_tag }} {{ form.precio }}
+        </div>
+        <div class="mb-3">
+          {{ form.stock.label_tag }} {{ form.stock }}
+        </div>
+        <div class="mb-3">
+          {{ form.marca.label_tag }} {{ form.marca }}
+        </div>
+        <div class="mb-3">
+          {{ form.imagen.label_tag }} {{ form.imagen }}
+        </div>
+        <div class="mb-3">
+          {{ form.descripcion.label_tag }} {{ form.descripcion }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.tallas.label_tag }}
+          {{ form.tallas }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.colores.label_tag }}
+          {{ form.colores }}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Agregar</button>
+        <a href="{% url 'admin_custom' %}" class="btn btn-secondary w-100 mt-2">Cancelar</a>
+      </form>
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          <ul>
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Scripts necesarios (orden correcto) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  $(document).ready(function () {
+    $('.select2').select2({
+      placeholder: "Seleccionar opciones",
+      width: '100%',
+      allowClear: true
+    });
+  });
+</script>
+
+{% endblock %}

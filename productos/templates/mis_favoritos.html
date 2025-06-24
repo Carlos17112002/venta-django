@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+  /* Contenedor centrado y con max width */
+  .productos-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  /* Grid flexible con gap */
+  .productos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  /* Cards estilo Eneba */
+  .card-eneba {
+    width: 250px;
+    border-radius: 1rem;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    background: #fff;
+  }
+
+  .card-eneba:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgb(0 0 0 / 0.15);
+  }
+
+  /* Imagen */
+  .card-eneba img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    user-select: none;
+  }
+
+  /* Botón favorito */
+  .favorito-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+
+  .favorito-btn:hover {
+    background-color: #ffe6e6;
+  }
+
+  .favorito-btn i {
+    font-size: 1.3rem;
+    color: #dc3545;
+    transition: color 0.3s ease;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 1rem 1.2rem;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-subtitle {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+    color: #212529;
+  }
+
+  .price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2ecc71;
+  }
+
+  /* Estilos formulario filtros */
+  .filtros-form {
+    max-width: 1200px;
+    margin: 1rem auto;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .filtros-form input,
+  .filtros-form select {
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .filtros-form button {
+    background-color: #2ecc71;
+    border: none;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+  }
+
+  .filtros-form button:hover {
+    background-color: #27ae60;
+  }
+</style>
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">Mis Favoritos</h2>
+  <div class="row row-cols-1 row-cols-md-3 g-4" id="favoritos-lista">
+    {% for favorito in favoritos %}
+    <div class="col">
+      <div class="card shadow rounded-4 border-0 h-100 position-relative">
+        <a href="{% url 'producto_detalle' favorito.producto.id %}">
+          {% if favorito.producto.imagen %}
+          <img
+            src="{{ favorito.producto.imagen.url }}"
+            class="card-img-top rounded-top-4"
+            alt="{{ favorito.producto.nombre }}"
+            style="height: 220px; object-fit: cover;"
+          />
+          {% else %}
+          <img
+            src="{% static 'img/placeholder.png' %}"
+            class="card-img-top rounded-top-4"
+            alt="Sin imagen"
+            style="height: 220px; object-fit: cover;"
+          />
+          {% endif %}
+        </a>
+
+        <!-- Botón favorito -->
+        <button
+          class="btn p-0 border-0 bg-transparent favorito-btn position-absolute top-0 end-0 m-3"
+          data-producto="{{ favorito.producto.id }}"
+          title="Quitar de favoritos"
+          aria-label="Quitar de favoritos"
+        >
+          <i class="bi bi-heart-fill text-danger" style="font-size: 1.5rem"></i>
+        </button>
+
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title fw-semibold text-primary mb-2">{{ favorito.producto.marca }}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{ favorito.producto.nombre }}</h6>
+          <p class="card-text flex-grow-1">{{ favorito.producto.descripcion|truncatewords:20 }}</p>
+          <div class="fs-5 text-success fw-bold mb-3">${{ favorito.producto.precio }}</div>
+          <a
+            href="{% url 'agregar_al_carrito' favorito.producto.id %}"
+            class="btn btn-primary"
+          >
+            Agregar al carrito
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12" id="no-favoritos-msg">
+      <div class="alert alert-info text-center">
+        No tienes productos favoritos.
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".favorito-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const productoId = this.getAttribute("data-producto");
+        const csrftoken = getCookie("csrftoken");
+        fetch(`/favorito/${productoId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.es_favorito) {
+              this.closest(".col").remove();
+              if (document.querySelectorAll("#favoritos-lista .col").length === 0) {
+                const msg = document.createElement("div");
+                msg.className = "col-12";
+                msg.innerHTML =
+                  '<div class="alert alert-info text-center">No tienes productos favoritos.</div>';
+                document.getElementById("favoritos-lista").appendChild(msg);
+              }
+            }
+          });
+      });
+    });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
+{% endblock %}
+

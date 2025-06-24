@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-4">
+
+  <!-- Formulario de búsqueda y filtros -->
+  <form method="get" class="mb-4 p-3 bg-light rounded-3 shadow-sm">
+    <div class="row g-2 align-items-center">
+
+      <div class="col-md-4">
+        <input
+          type="text"
+          name="q"
+          placeholder="Buscar productos..."
+          value="{{ filtros.q }}"
+          class="form-control"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <select name="categoria" class="form-select">
+          <option value="">Todas las categorías</option>
+          {% for key, label in categorias %}
+            <option value="{{ key }}" {% if filtros.categoria == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <input
+          type="number"
+          name="precio_min"
+          min="0"
+          step="0.01"
+          placeholder="Precio mínimo"
+          value="{{ filtros.precio_min }}"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-2">
+        <input
+          type="number"
+          name="precio_max"
+          min="0"
+          step="0.01"
+          placeholder="Precio máximo"
+          value="{{ filtros.precio_max }}"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-1 d-grid">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Grid de productos -->
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for producto in productos %}
+    <div class="col">
+      <div class="card shadow rounded-4 border-0 h-100" style="max-width: 300px; margin: auto;">
+        
+        <a href="{% url 'producto_detalle' producto.id %}">
+          {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" class="card-img-top rounded-top-4" alt="{{ producto.nombre }}" style="height: 180px; object-fit: cover;">
+          {% else %}
+            <img src="{% static 'img/placeholder.png' %}" class="card-img-top rounded-top-4" alt="Sin imagen" style="height: 180px; object-fit: cover;">
+          {% endif %}
+        </a>
+
+        {% if user.is_authenticated %}
+          <button
+            class="btn p-0 border-0 bg-transparent favorito-btn"
+            data-producto="{{ producto.id }}"
+            title="Favorito"
+            aria-label="Favorito"
+          >
+            {% if producto.id in favoritos_ids %}
+            <i class="bi bi-heart-fill text-danger" style="font-size: 1.5rem"></i>
+            {% else %}
+            <i class="bi bi-heart" style="font-size: 1.5rem; color: #888"></i>
+            {% endif %}
+          </button>
+        {% endif %}
+
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title fw-semibold text-primary mb-2">{{ producto.marca }}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{ producto.nombre }}</h6>
+          <div class="fs-5 text-success fw-bold">${{ producto.precio }}</div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <p class="text-center text-muted">No se encontraron productos.</p>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".favorito-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const productoId = this.getAttribute("data-producto");
+        const csrftoken = getCookie("csrftoken");
+        fetch(`/favorito/${productoId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          const icon = this.querySelector("i");
+          if (data.es_favorito) {
+            icon.className = "bi bi-heart-fill text-danger";
+          } else {
+            icon.className = "bi bi-heart";
+            icon.style.color = "#888";
+          }
+        });
+      });
+    });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
+
+{% endblock %}

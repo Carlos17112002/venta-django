@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Historial de Ventas</h2>
+
+
+    <form method="get" class="d-flex gap-2 mb-3">
+        <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+        <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+  <div class="mb-3">
+    <strong>Ganancias Totales:</strong> ${{ total_ganancias }}
+  </div>
+
+  {% if ventas %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Precio Unitario</th>
+        <th>Cantidad</th>
+        <th>Total</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for venta in ventas %}
+      <tr>
+        <td>{{ venta.producto.nombre }}</td>
+        <td>${{ venta.producto.precio }}</td>
+        <td>{{ venta.cantidad }}</td>
+        <td>${{ venta.total }}</td>
+        <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{% url 'exportar_excel' %}" class="btn btn-success mb-3">Exportar a Excel</a>
+
+  {% else %}
+  <div class="alert alert-info">No hay ventas registradas.</div>
+  {% endif %}
+</div>
+{% endblock %}

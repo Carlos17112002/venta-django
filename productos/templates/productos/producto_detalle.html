@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container my-5">
+  <div class="row">
+    <!-- Imagen del producto -->
+    <div class="col-md-6">
+      <div class="image-zoom-container">
+        {% if producto.imagen %}
+          <img id="productImage" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+        {% else %}
+          <img id="productImage" src="{% static 'img/placeholder.png' %}" alt="Sin imagen" />
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Información del producto -->
+    <div class="col-md-6">
+      <h2 class="fw-bold">{{ producto.nombre }}</h2>
+      <p class="text-primary fw-semibold mb-2">{{ producto.marca }}</p>
+      <p class="mb-4">{{ producto.descripcion }}</p>
+
+      <h4 class="text-success fw-bold mb-3">${{ producto.precio }}</h4>
+
+      <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+        {% csrf_token %}
+
+        <label for="talla-select">Talla:</label>
+        <select id="talla-select" name="talla" class="form-select mb-2">
+          {% for talla in tallas %}
+            <option value="{{ talla.id }}">{{ talla.nombre }}</option>
+          {% empty %}
+            <option disabled>No hay tallas disponibles</option>
+          {% endfor %}
+        </select>
+
+        <label for="color-select">Color:</label>
+        <select id="color-select" name="color" class="form-select mb-2">
+          {% for color in colores %}
+            <option value="{{ color.id }}">{{ color.nombre }}</option>
+          {% empty %}
+            <option disabled>No hay colores disponibles</option>
+          {% endfor %}
+        </select>
+
+        <div class="mb-3">
+          {% if producto.stock == 0 %}
+            <small class="text-danger">Producto sin stock disponible.</small>
+          {% else %}
+            <small class="text-muted">Stock disponible: {{ producto.stock }}</small>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" {% if producto.stock == 0 %}disabled{% endif %}>
+          Agregar al carrito
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos para el zoom -->
+<style>
+.image-zoom-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 400px;
+  border-radius: 1rem;
+  touch-action: none;
+}
+
+.image-zoom-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+@media (hover: hover) {
+  .image-zoom-container:hover img {
+    transform: scale(2);
+    cursor: zoom-out;
+  }
+}
+</style>
+
+<!-- Script para el zoom interactivo -->
+<script>
+  const img = document.getElementById('productImage');
+  const container = img.parentElement;
+
+  // Zoom con mouse (solo desktop)
+  container.addEventListener('mousemove', function (e) {
+    if (window.innerWidth > 768) {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      img.style.transformOrigin = `${x}% ${y}%`;
+    }
+  });
+
+  container.addEventListener('mouseleave', function () {
+    img.style.transformOrigin = 'center center';
+  });
+
+  // Zoom táctil en móvil
+  let scale = 1;
+  let lastDistance = null;
+
+  container.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.pageX - touch1.pageX,
+        touch2.pageY - touch1.pageY
+      );
+
+      if (lastDistance) {
+        const delta = distance - lastDistance;
+        scale += delta * 0.005;
+        scale = Math.max(1, Math.min(scale, 3));
+        img.style.transform = `scale(${scale})`;
+      }
+
+      lastDistance = distance;
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', function () {
+    lastDistance = null;
+  });
+</script>
+
+{% endblock %}

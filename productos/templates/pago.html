@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Pago</h2>
+  <p><strong>Tipo de entrega:</strong> {{ pedido.get_tipo_entrega_display }}</p>
+  <p><strong>Dirección:</strong> {{ pedido.direccion|default:"No aplica" }}</p>
+  <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+  <p><strong>Total a pagar:</strong> ${{ pedido.total|floatformat:2 }}</p>
+
+  <form method="post" action="{% url 'procesar_pago' %}">
+  {% csrf_token %}
+  <button class="btn btn-success" type="submit">Realizar pago</button>
+</form>
+</div>
+{% endblock %}

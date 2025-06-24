@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">Mi Carrito</h2>
+  <div class="row">
+    {% if items %}
+    <table class="table table-bordered align-middle text-center">
+      <thead class="table-light">
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Marca</th>
+          <th>Talla</th>
+          <th>Color</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.producto.nombre }}</td>
+          <td>
+            <form action="{% url 'actualizar_cantidad_carrito' item.id %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input
+                type="number"
+                name="cantidad"
+                value="{{ item.cantidad }}"
+                min="1"
+                style="width: 60px"
+              />
+              <button type="submit" class="btn btn-sm btn-outline-primary">
+                Actualizar
+              </button>
+            </form>
+          </td>
+          <td>${{ item.producto.precio|floatformat:2 }}</td>
+          <td>{{ item.producto.marca|default:"—" }}</td>
+          <td>{{ item.talla|default:"—" }}</td>
+          <td>{{ item.color|default:"—" }}</td>
+          <td>${{ item.producto.precio|floatformat:2|floatformat:"g" }}</td>
+          <td>
+            <a href="{% url 'eliminar_item_carrito' item.id %}" class="btn btn-sm btn-danger">
+              Eliminar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="text-end mt-3">
+      <h4>Total a pagar: ${{ total|floatformat:2 }}</h4>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">Tu carrito está vacío.</div>
+    {% endif %}
+    <div class="text-end mt-4">
+  <a href="{% url 'checkout' %}" class="btn btn-success btn-lg">
+    <i class="bi bi-credit-card"></i> Pagar
+  </a>
+</div>
+  </div>
+</div>
+{% endblock %}
