@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Producto, Carrito, ItemCarrito
 from .models import Producto, Talla, Color
 from django import forms
+from .models import Pedido, ItemPedido
 
 
 
@@ -41,3 +42,17 @@ class ProductoForm(forms.ModelForm):
         model = Producto
         fields = ['nombre', 'descripcion', 'precio', 'imagen', 'categoria', 'marca', 'stock', 'tallas', 'colores']    
     
+    
+
+
+
+class ItemPedidoInline(admin.TabularInline):
+    model = ItemPedido
+    extra = 0
+
+@admin.register(Pedido)
+class PedidoAdmin(admin.ModelAdmin):
+    list_display = ['id', 'usuario', 'tipo_entrega', 'telefono', 'pagado', 'creado']
+    list_filter = ['pagado', 'tipo_entrega']
+    search_fields = ['usuario__username', 'telefono']
+    inlines = [ItemPedidoInline]

@@ -1,46 +1,61 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
 {% block content %}
-<div class="container mt-5">
-  <h2 class="mb-4">Historial de Ventas</h2>
+<div class="container py-5">
+  <h2 class="mb-4 text-center">Historial de Ventas</h2>
 
+  {% if pedidos %}
+    {% for pedido in pedidos %}
+      <div class="card mb-4 shadow-sm rounded-3">
+        <div class="card-header bg-dark text-white d-flex justify-content-between">
+          <strong>Pedido #{{ pedido.id }}</strong>
+          <span>{{ pedido.creado|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Tipo de entrega:</strong> {{ pedido.get_tipo_entrega_display }}</p>
+          <p><strong>Dirección:</strong> {{ pedido.direccion|default:"No aplica" }}</p>
+          <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
 
-    <form method="get" class="d-flex gap-2 mb-3">
-        <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
-        <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-    </form>
-  <div class="mb-3">
-    <strong>Ganancias Totales:</strong> ${{ total_ganancias }}
-  </div>
+          <table class="table table-bordered table-sm mt-3">
+            <thead class="table-secondary">
+              <tr>
+                <th>Producto</th>
+                <th>Talla</th>
+                <th>Color</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in pedido.items.all %}
+              <tr>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.talla.nombre }}</td>
+                <td>{{ item.color.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.subtotal|floatformat:0 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
 
-  {% if ventas %}
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Precio Unitario</th>
-        <th>Cantidad</th>
-        <th>Total</th>
-        <th>Fecha</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for venta in ventas %}
-      <tr>
-        <td>{{ venta.producto.nombre }}</td>
-        <td>${{ venta.producto.precio }}</td>
-        <td>{{ venta.cantidad }}</td>
-        <td>${{ venta.total }}</td>
-        <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          <div class="text-end mt-2">
+            <strong>Total:</strong> 
+            ${{ pedido.total|floatformat:0 }}
+          </div>
+        </div>
+      </div>
+      
+    {% endfor %}
+      <div class="d-flex justify-content-end mb-4">
+        <a href="{% url 'exportar_excel' %}" class="btn btn-success mb-3">
+          <i class="bi bi-file-earmark-excel-fill me-2"></i> Exportar a Excel
+        </a>
 
-  <a href="{% url 'exportar_excel' %}" class="btn btn-success mb-3">Exportar a Excel</a>
-
+      </div>
   {% else %}
-  <div class="alert alert-info">No hay ventas registradas.</div>
+    <p class="text-center">No hay pedidos aún.</p>
   {% endif %}
 </div>
 {% endblock %}
+

@@ -1,68 +1,82 @@
+
 {% extends "base.html" %}
+{% load form_filters %}
 {% block content %}
-<div class="container mt-5" style="max-width: 500px;">
-  <div class="card shadow-sm border rounded-3">
-    <div class="card-body p-4">
+<div class="container mt-5" style="max-width: 550px;">
+  <div class="card shadow-lg border-0 rounded-4">
+    <div class="card-body p-5">
 
-      <h2 class="text-center mb-5 fw-bold">Perfil de Usuario</h2>
+      <h2 class="text-center mb-4 fw-bold text-dark">Perfil de Usuario</h2>
 
-      <div class="text-center mb-5">
+      <div class="text-center mb-4">
         <span class="bi bi-person-circle" style="font-size: 4rem; color: #0d6efd;"></span>
-        <p class="mt-3 mb-1 fw-semibold">Usuario actual:</p>
-        <p class="h5">{{ user.username }}</p>
+        <p class="mt-3 mb-1 text-secondary">Usuario actual:</p>
+        <p class="h5 fw-semibold text-primary">{{ user.username }}</p>
       </div>
 
+      <!-- Cambiar nombre de usuario -->
       <form method="post" class="mb-5" novalidate>
         {% csrf_token %}
-        <h5 class="mb-4 fw-semibold border-bottom pb-2">Modificar nombre de usuario</h5>
+        <h5 class="mb-3 fw-semibold text-dark border-bottom pb-2">Modificar nombre de usuario</h5>
         <div class="mb-3">
-          {{ username_form.username.label_tag }}
-          {{ username_form.username }}
+          <label class="form-label" for="{{ username_form.username.id_for_label }}">Nombre de usuario</label>
+          {{ username_form.username|add_class:"form-control" }}
           {% if username_form.username.errors %}
           <div class="text-danger small mt-1">{{ username_form.username.errors|striptags }}</div>
           {% endif %}
         </div>
-        <button type="submit" name="cambiar_usuario" class="btn btn-primary w-100">
-          Actualizar nombre de usuario
+        <button type="submit" name="cambiar_usuario" class="btn btn-dark w-100">
+          <i class="bi bi-pencil-square me-1"></i> Actualizar nombre de usuario
         </button>
         {% if username_success %}
-        <div class="alert alert-success py-2 mt-3 text-center">
+        <div class="alert alert-success py-2 mt-3 text-center mb-0">
           Nombre de usuario actualizado correctamente.
         </div>
         {% endif %}
       </form>
 
+      <!-- Cambiar contraseña -->
       <form method="post" class="mb-5" novalidate>
         {% csrf_token %}
-        <h5 class="mb-4 fw-semibold border-bottom pb-2">Modificar contraseña</h5>
+        <h5 class="mb-3 fw-semibold text-dark border-bottom pb-2">Modificar contraseña</h5>
         {% for field in password_form %}
         <div class="mb-3">
-          {{ field.label_tag }}
-          {{ field }}
+          {% if field.name == "old_password" %}
+            <label class="form-label" for="{{ field.id_for_label }}">Contraseña actual</label>
+          {% elif field.name == "new_password1" %}
+            <label class="form-label" for="{{ field.id_for_label }}">Nueva contraseña</label>
+          {% elif field.name == "new_password2" %}
+            <label class="form-label" for="{{ field.id_for_label }}">Confirmar nueva contraseña</label>
+          {% else %}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% endif %}
+          {{ field|add_class:"form-control" }}
           {% if field.errors %}
           <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
           {% endif %}
         </div>
         {% endfor %}
-        <button type="submit" name="cambiar_contrasena" class="btn btn-warning w-100">
-          Actualizar contraseña
+        <button type="submit" name="cambiar_contrasena" class="btn btn-warning text-white w-100">
+          <i class="bi bi-shield-lock me-1"></i> Actualizar contraseña
         </button>
         {% if password_success %}
-        <div class="alert alert-success py-2 mt-3 text-center">
+        <div class="alert alert-success py-2 mt-3 text-center mb-0">
           Contraseña actualizada correctamente.
         </div>
         {% endif %}
       </form>
 
+      <!-- Cerrar sesión -->
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger w-100 mb-3">
-          Cerrar sesión
+        <button type="submit" class="btn btn-outline-danger w-100 mb-3">
+          <i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión
         </button>
       </form>
 
-      <a href="{% url 'panel_usuario' %}" class="btn btn-secondary w-100">
-        Volver al panel principal
+      <!-- Volver -->
+      <a href="{% url 'panel_usuario' %}" class="btn btn-outline-secondary w-100">
+        <i class="bi bi-arrow-left-circle me-1"></i> Volver al panel principal
       </a>
 
     </div>

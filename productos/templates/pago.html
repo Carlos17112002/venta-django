@@ -1,15 +1,82 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container mt-5">
-  <h2>Pago</h2>
-  <p><strong>Tipo de entrega:</strong> {{ pedido.get_tipo_entrega_display }}</p>
-  <p><strong>Dirección:</strong> {{ pedido.direccion|default:"No aplica" }}</p>
-  <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-  <p><strong>Total a pagar:</strong> ${{ pedido.total|floatformat:2 }}</p>
 
-  <form method="post" action="{% url 'procesar_pago' %}">
-  {% csrf_token %}
-  <button class="btn btn-success" type="submit">Realizar pago</button>
-</form>
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+
+      <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-header bg-dark text-white rounded-top-4 py-3">
+          <h4 class="mb-0 text-center fw-semibold">Resumen del Pedido</h4>
+        </div>
+
+        <div class="card-body bg-light-subtle p-5">
+          <!-- Datos del pedido -->
+          <ul class="list-group list-group-flush mb-4">
+            <li class="list-group-item d-flex justify-content-between">
+              <span class="fw-semibold text-secondary">Tipo de entrega:</span>
+              <span>{{ pedido.get_tipo_entrega_display }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span class="fw-semibold text-secondary">Dirección:</span>
+              <span>{{ pedido.direccion|default:"No aplica" }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span class="fw-semibold text-secondary">Teléfono:</span>
+              <span>{{ pedido.telefono }}</span>
+            </li>
+          </ul>
+
+          <!-- Tabla con productos -->
+          <h5 class="mb-3">Productos en tu pedido:</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Talla</th>
+                <th>Color</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              <tr>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.talla.nombre }}</td>
+                <td>{{ item.color.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td class="text-success fw-semibold">${{ item.subtotal|floatformat:2 }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center">No hay productos en el pedido.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <!-- Total a pagar -->
+          <div class="d-flex justify-content-end align-items-center mb-4">
+            <h5>Total a pagar: <span class="text-success fw-bold">${{ total|floatformat:2 }}</span></h5>
+          </div>
+
+          <!-- Botón para realizar pago -->
+          <form method="post" action="{% url 'procesar_pago' pedido.id %}">
+
+
+            {% csrf_token %}
+            <div class="d-grid">
+              <button type="submit" class="btn btn-outline-dark btn-lg">
+                <i class="bi bi-cash-coin me-2"></i> Realizar pago
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}

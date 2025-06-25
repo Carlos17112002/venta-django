@@ -1,4 +1,3 @@
-<!-- filepath: productos_clinicos/productos/templates/base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -20,9 +19,44 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   <style>
-    /* Botón mis ventas */
-    .btn-ventas {
-      background-color: #2ecc71;
+    /* Navbar elegante y formal */
+    .navbar-custom {
+      background-color: #0d1b2a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-custom .navbar-brand {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1.3rem;
+    }
+
+    .navbar-custom .nav-link {
+      color: #d3d3d3;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .navbar-custom .nav-link:hover {
+      color: #ffffff;
+    }
+
+    .navbar-custom .btn-outline-secondary,
+    .navbar-custom .btn-outline-danger,
+    .navbar-custom .btn-outline-dark {
+      border-color: #ced4da;
+      color: #f8f9fa;
+    }
+
+    .navbar-custom .btn-outline-secondary:hover,
+    .navbar-custom .btn-outline-danger:hover,
+    .navbar-custom .btn-outline-dark:hover {
+      background-color: #1b263b;
+      color: #ffffff;
+    }
+
+    .navbar-custom .btn-ventas {
+      background-color: #198754;
       color: white;
       padding: 0.6rem 1.5rem;
       border-radius: 0.5rem;
@@ -33,11 +67,13 @@
       gap: 0.5rem;
       text-decoration: none;
     }
-    .btn-ventas:hover {
-      background-color: rgb(72, 72, 72);
+
+    .navbar-custom .btn-ventas:hover {
+      background-color: #14532d;
       color: white;
     }
-    .btn-ventas i {
+
+    .navbar-custom .btn-ventas i {
       font-size: 1rem;
     }
 
@@ -67,7 +103,7 @@
 </head>
 <body>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'lista_productos' %}">Medicals</a>
       <button
@@ -90,7 +126,7 @@
           <a href="{% url 'admin_custom' %}" class="btn btn-outline-dark ms-2" title="Panel Admin">
             <span class="bi bi-speedometer2"></span> Panel Admin
           </a>
-          <a href="{% url 'historial_ventas' %}" class="btn-ventas">
+          <a href="{% url 'historial_ventas' %}" class="btn-ventas ms-2">
             <i class="bi bi-clipboard-data"></i> Mis Ventas
           </a>
         {% endif %}
@@ -140,7 +176,7 @@
       <a href="tel:+56990336434" class="btn btn-success btn-sm me-2">
         <span class="bi bi-telephone"></span> +56 9 9033 6434
       </a>
-      <a href="https://www.google.com/maps/place/German+Riesco+329,+local+203,+Rancagua,+O'Higgins/@-34.1702389,-70.7422118,17z/data=!3m1!4b1!4m5!3m4!1s0x966343401a729abd:0x4ca9e7825b22d422!8m2!3d-34.1702434!4d-70.7396369?hl=es&entry=ttu&g_ep=EgoyMDI1MDYxMS4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="btn btn-info btn-sm me-2">
+      <a href="https://www.google.com/maps/place/German+Riesco+329,+local+203,+Rancagua,+O'Higgins" target="_blank" class="btn btn-info btn-sm me-2">
         <span class="bi bi-geo-alt"></span> Ubicación
       </a>
     </div>

@@ -32,7 +32,7 @@ from .models import ItemCarrito, Carrito
 
 from django.shortcuts import render, redirect
 from .forms import CheckoutForm
-from .models import Pedido
+from .models import Pedido, ItemPedido
 from .models import Producto, Talla, Color
 
 
@@ -111,22 +111,27 @@ def lista_productos(request):
 
 def ver_carrito(request):
     if request.user.is_authenticated:
-        # Intentamos recuperar el carrito del usuario
-        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        carrito = Carrito.objects.filter(usuario=request.user).first()
     else:
-        # Si no hay sesión activa, la creamos
         session_key = request.session.session_key
         if not session_key:
             request.session.create()
             session_key = request.session.session_key
+        carrito = Carrito.objects.filter(session_key=session_key, usuario=None).first()
 
-        # Obtenemos el carrito asociado a la sesión
-        carrito, created = Carrito.objects.get_or_create(session_key=session_key, usuario=None)
+    if carrito:
+        items = carrito.items.select_related('producto', 'talla', 'color').all()
+        total = sum(item.producto.precio * item.cantidad for item in items)
+    else:
+        items = []
+        total = 0
 
-    items = ItemCarrito.objects.filter(carrito=carrito)
-    total = sum(item.producto.precio * item.cantidad for item in items)
-
-    return render(request, 'carrito.html', {'items': items, 'total': total})
+    context = {
+        'carrito': carrito,
+        'items': items,
+        'total': total,
+    }
+    return render(request, 'carrito.html', context)
 
 
 def registro(request):
@@ -275,16 +280,17 @@ def productos_mujer(request):
 from django.shortcuts import get_object_or_404, redirect
 from .models import Producto, Carrito, ItemCarrito
 
+from django.shortcuts import get_object_or_404
+
 def agregar_al_carrito(request, producto_id):
     if request.method == "POST":
-        producto = Producto.objects.get(id=producto_id)
+        producto = get_object_or_404(Producto, id=producto_id)
         talla_id = request.POST.get('talla')
         color_id = request.POST.get('color')
         cantidad = int(request.POST.get('cantidad', 1))
 
-        # 🔽 Convertimos los IDs a instancias
-        talla = Talla.objects.get(id=talla_id)
-        color = Color.objects.get(id=color_id)
+        talla = get_object_or_404(Talla, id=talla_id) if talla_id else None
+        color = get_object_or_404(Color, id=color_id) if color_id else None
 
         if request.user.is_authenticated:
             carrito, created = Carrito.objects.get_or_create(usuario=request.user)
@@ -295,16 +301,21 @@ def agregar_al_carrito(request, producto_id):
                 session_key = request.session.session_key
             carrito, created = Carrito.objects.get_or_create(session_key=session_key, usuario=None)
 
-      
-        item = ItemCarrito.objects.create(
+        # Buscar si ya existe un item igual
+        item, created = ItemCarrito.objects.get_or_create(
             carrito=carrito,
             producto=producto,
             talla=talla,
             color=color,
-            cantidad=cantidad
+            defaults={'cantidad': cantidad}
         )
+        if not created:
+            # Si existe, actualizar la cantidad
+            item.cantidad += cantidad
+            item.save()
 
-        return redirect('ver_carrito')  # o la URL que corresponda
+        return redirect('ver_carrito')
+
 
 
 def editar_producto(request, producto_id):
@@ -565,8 +576,10 @@ def eliminar_item_carrito(request, item_id):
     return redirect('ver_carrito')
 
 
+from django.shortcuts import get_object_or_404, redirect
+
 def actualizar_cantidad_carrito(request, item_id):
-    # Asegurarse de que haya una sesión activa
+    # Asegurarse de que haya una sesión activa para usuarios no autenticados
     session_key = request.session.session_key
     if not session_key:
         request.session.create()
@@ -582,19 +595,29 @@ def actualizar_cantidad_carrito(request, item_id):
     if not carrito:
         return redirect('ver_carrito')
 
-    # Obtener el item del carrito
-    item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
+    # Intentar obtener el item que pertenece al carrito actual
+    try:
+        item = ItemCarrito.objects.get(id=item_id, carrito=carrito)
+    except ItemCarrito.DoesNotExist:
+        # El item no existe o no pertenece a este carrito
+        return redirect('ver_carrito')
 
-    # Actualizar o eliminar el item
+    # Solo procesar si es POST (actualizar cantidad)
     if request.method == 'POST':
-        cantidad = int(request.POST.get('cantidad', 1))
+        try:
+            cantidad = int(request.POST.get('cantidad', 1))
+        except (TypeError, ValueError):
+            cantidad = 1
+
         if cantidad > 0:
             item.cantidad = cantidad
             item.save()
         else:
+            # Si la cantidad es 0 o negativa, eliminar el item
             item.delete()
 
     return redirect('ver_carrito')
+
 
 
 TALLAS = Talla.objects.all()
@@ -629,33 +652,52 @@ def agregar_producto(request):
 
 def checkout_view(request):
     if request.method == 'POST':
-        form = CheckoutForm(request.POST)
-        if form.is_valid():
-            # Aquí puedes guardar la info del pedido o llevarlo al paso siguiente
-            # Por ahora redirigiremos a una página de confirmación de pago simulada
-            request.session['checkout_data'] = form.cleaned_data
-            return redirect('pago')  # vista siguiente (paso final)
+        # Obtener carrito igual que en ver_carrito
+        if request.user.is_authenticated:
+            carrito = Carrito.objects.filter(usuario=request.user).first()
+        else:
+            session_key = request.session.session_key
+            if not session_key:
+                request.session.create()
+                session_key = request.session.session_key
+            carrito = Carrito.objects.filter(session_key=session_key).first()
+
+        if not carrito or carrito.items.count() == 0:
+            return redirect('ver_carrito')  # No hay items, redirige
+
+        # Aquí obtén los datos del formulario: tipo_entrega, direccion, telefono
+        tipo_entrega = request.POST.get('tipo_entrega')
+        direccion = request.POST.get('direccion') if tipo_entrega == 'envio' else ''
+        telefono = request.POST.get('telefono')
+
+        pedido = Pedido.objects.create(
+            usuario=request.user if request.user.is_authenticated else None,
+            tipo_entrega=tipo_entrega,
+            direccion=direccion,
+            telefono=telefono
+        )
+
+        # Copiar los items del carrito al pedido
+        for item_carrito in carrito.items.all():
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=item_carrito.producto,
+                talla=item_carrito.talla,
+                color=item_carrito.color,
+                cantidad=item_carrito.cantidad
+            )
+
+        # Limpiar carrito
+        carrito.items.all().delete()
+
+        # Redirigir a la página de pago con el pedido creado
+        return redirect('pago', pedido_id=pedido.id)
+
     else:
-        form = CheckoutForm()
+        # GET muestra el formulario checkout
+        # También puedes pasar el carrito y total para mostrar resumen antes de pagar
+        return render(request, 'checkout.html')
 
-    return render(request, 'checkout.html', {'form': form})
-
-
-def pago_view(request):
-    # Por ejemplo, obtener el último pedido del usuario (o usa otro criterio)
-    if request.user.is_authenticated:
-        pedido = Pedido.objects.filter(usuario=request.user).order_by('-id').first()
-    else:
-        pedido = None  # O manejar pedido para usuario anónimo
-
-    if not pedido:
-        # No hay pedido, redirige a carrito o checkout
-        return redirect('checkout')
-
-    context = {
-        'pedido': pedido
-    }
-    return render(request, 'pago.html', context)
 
 
 from django.shortcuts import render, redirect
@@ -678,21 +720,39 @@ def procesar_checkout(request):
             telefono=telefono,
         )
 
-        # Aquí normalmente irías a la página de pago o confirmación
-        return redirect('pago')  # Cambia 'pago' por la url de tu proceso de pago
+        # Obtener el carrito (de usuario o sesión)
+        carrito = obtener_carrito(request)  # Ajusta según tu implementación
 
-    return redirect('checkout')  # Si no es POST, regresa a checkout
+        # Crear los items del pedido con los productos del carrito
+        for item_carrito in carrito.items.all():
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=item_carrito.producto,
+                talla=item_carrito.talla,
+                color=item_carrito.color,
+                cantidad=item_carrito.cantidad,
+            )
+
+        # Vaciar carrito después de crear pedido
+        carrito.items.all().delete()
+
+        return redirect('pago_con_pedido', pedido_id=pedido.id)
+
+    return redirect('checkout')
+
 
 from django.shortcuts import redirect
 
-def procesar_pago(request):
+def procesar_pago(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+
     if request.method == 'POST':
-        # Aquí procesas el pago (lógica, integración, etc.)
-        # Por ahora simplemente redirigimos a una página de "gracias"
-        return redirect('gracias')
-    else:
-        # Si acceden con GET, redirige o muestra error
-        return redirect('pago')
+        pedido.pagado = True
+        pedido.save()
+        # Aquí podrías también vaciar el carrito si es necesario
+        return redirect('gracias')  # o cualquier otra view
+
+    return redirect('pago_con_pedido', pedido_id=pedido.id)
 
 
 def gracias_view(request):
@@ -822,23 +882,21 @@ from django.db.models import Sum
 from .models import Venta
 
 @login_required
+@login_required
 def historial_ventas(request):
-    ventas = Venta.objects.filter(producto__creador=request.user).order_by('-fecha')
+    user = request.user
 
-    # Filtros por fecha
-    desde = request.GET.get('desde')
-    hasta = request.GET.get('hasta')
+    # Obtener todos los pedidos que tienen al menos un item con producto creado por este admin
+    pedidos = Pedido.objects.filter(
+        items__producto__creador=user
+    ).distinct().prefetch_related('items__producto', 'items__talla', 'items__color')
 
-    if desde:
-        ventas = ventas.filter(fecha__date__gte=parse_date(desde))
-    if hasta:
-        ventas = ventas.filter(fecha__date__lte=parse_date(hasta))
+    # Calcular total para cada pedido
+    for pedido in pedidos:
+        pedido.total = sum(item.subtotal() for item in pedido.items.all())
 
-    return render(request, 'venta/historial.html', {
-        'ventas': ventas,
-        'desde': desde,
-        'hasta': hasta,
-    })
+    return render(request, 'venta/historial.html', {'pedidos': pedidos})
+
 
 
 import openpyxl
@@ -846,26 +904,151 @@ from django.http import HttpResponse
 from .models import Venta
 
 def exportar_excel(request):
-    ventas = Venta.objects.filter(producto__creador=request.user).order_by('-fecha')
+    user = request.user
+
+    # Obtener pedidos que contienen items con productos creados por este admin
+    pedidos = Pedido.objects.filter(
+        items__producto__creador=user
+    ).distinct().prefetch_related('items__producto')
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Historial de Ventas"
 
     # Cabeceras
-    ws.append(['Producto', 'Cantidad', 'Precio unitario', 'Total', 'Fecha'])
+    ws.append(['ID Pedido', 'Producto', 'Cantidad', 'Precio unitario', 'Subtotal', 'Fecha Pedido'])
 
-    for venta in ventas:
-        total = venta.cantidad * venta.precio_unitario
-        ws.append([
-            venta.producto.nombre,
-            venta.cantidad,
-            venta.precio_unitario,
-            total,
-            venta.fecha.strftime("%Y-%m-%d"),
-        ])
+    for pedido in pedidos:
+        fecha_str = pedido.creado.strftime("%Y-%m-%d %H:%M")
+        for item in pedido.items.all():
+            # Solo exportar items cuyos productos son creados por el admin actual
+            if item.producto.creador == user:
+                subtotal = item.subtotal()
+                precio_unitario = item.producto.precio
+                ws.append([
+                    pedido.id,
+                    item.producto.nombre,
+                    item.cantidad,
+                    float(precio_unitario),
+                    float(subtotal),
+                    fecha_str
+                    
+                ])
 
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="historial_ventas.xlsx"'
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=historial_ventas.xlsx'
     wb.save(response)
     return response
+
+
+def pago_view(request, pedido_id=None):
+    if pedido_id:
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+    else:
+        # Si quieres, lógica para obtener el pedido más reciente o según sesión
+        pedido = None
+
+    if not pedido:
+        return redirect('ver_carrito')
+
+    items = pedido.items.select_related('producto', 'talla', 'color').all()
+    total = sum(item.subtotal() for item in items)
+
+    context = {
+        'pedido': pedido,
+        'items': items,
+        'total': total
+    }
+    return render(request, 'pago.html', context)
+
+
+
+
+from django.db import transaction
+
+def crear_pedido_desde_carrito(request):
+    if not request.user.is_authenticated:
+        # Aquí podrías manejar usuarios anónimos o redirigir al login
+        return redirect('login')
+
+    # Obtener el carrito del usuario
+    carrito = Carrito.objects.filter(usuario=request.user).first()
+    if not carrito or not carrito.items.exists():
+        # No hay carrito o está vacío
+        return redirect('ver_carrito')
+
+    # Aquí puedes recoger los datos de entrega, teléfono, etc. desde un formulario POST
+    # Para ejemplo estático:
+    tipo_entrega = 'envio'  # o 'retiro', debe venir de formulario
+    direccion = 'Dirección ejemplo'  # debería venir del formulario
+    telefono = '123456789'  # del formulario también
+
+    with transaction.atomic():
+        pedido = Pedido.objects.create(
+            usuario=request.user,
+            tipo_entrega=tipo_entrega,
+            direccion=direccion,
+            telefono=telefono,
+        )
+
+        # Copiar items del carrito a pedido
+        for item_carrito in carrito.items.all():
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=item_carrito.producto,
+                talla=item_carrito.talla,
+                color=item_carrito.color,
+                cantidad=item_carrito.cantidad,
+            )
+
+        # Vaciar carrito
+        carrito.items.all().delete()
+
+    return redirect('pago')  # redirige a la vista donde se muestra el resumen del pedido
+
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def finalizar_compra(request):
+    # Aquí obtienes los datos de entrega del formulario POST
+    tipo_entrega = request.POST.get('tipo_entrega')
+    direccion = request.POST.get('direccion')
+    telefono = request.POST.get('telefono')
+
+    carrito = Carrito.objects.filter(usuario=request.user).first()
+    if not carrito or not carrito.items.exists():
+        return redirect('ver_carrito')
+
+    with transaction.atomic():
+        pedido = Pedido.objects.create(
+            usuario=request.user,
+            tipo_entrega=tipo_entrega,
+            direccion=direccion,
+            telefono=telefono,
+        )
+        for item_carrito in carrito.items.all():
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=item_carrito.producto,
+                talla=item_carrito.talla,
+                color=item_carrito.color,
+                cantidad=item_carrito.cantidad,
+            )
+        carrito.items.all().delete()
+
+    return redirect('pago')
+
+
+def obtener_carrito(request):
+    if request.user.is_authenticated:
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+    else:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        carrito, created = Carrito.objects.get_or_create(session_key=session_key)
+    return carrito

@@ -59,9 +59,8 @@ urlpatterns = [
     path('base/', views.base, name='base'),
     path('checkout/', views.checkout_view, name='checkout'),
     path('checkout/procesar/', views.procesar_checkout, name='procesar_checkout'),
-    path('pago/', views.pago_view, name='pago'),
-    path('pago/procesar/', views.procesar_pago, name='procesar_pago'),
-    path('pago/', views.pago_view, name='pago'),
+    path('pago/', views.pago_view, name='pago_sin_pedido'),
+
     path('gracias/', views.gracias_view, name='gracias'),
     path('', views.home_view, name='home'),
     path('producto/<int:producto_id>/', views.producto_detalle, name='producto_detalle'),
@@ -69,6 +68,14 @@ urlpatterns = [
     path('productos/mujer/', views.lista_productos_mujer, name='productos_mujer'),
     path('mis-ventas/', views.historial_ventas, name='historial_ventas'),
     path('exportar-excel/', exportar_excel, name='exportar_excel'),
+    path('finalizar-compra/', views.finalizar_compra, name='finalizar_compra'),
+    path('pago/<int:pedido_id>/', views.pago_view, name='pago_con_pedido'),
+    path('pago/<int:pedido_id>/', views.pago_view, name='pago'),  # para pago con pedido
+    path('pago/procesar/<int:pedido_id>/', views.procesar_pago, name='procesar_pago'),
+
+    
+
+
     
 ]
 

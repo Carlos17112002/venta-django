@@ -2,53 +2,55 @@
 {% load static %}
 {% block content %}
 
-<div class="container mt-5 mb-5">
+<div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-8">
 
-      <div class="card shadow-lg rounded-4 border-0">
-        <div class="card-header bg-primary text-white rounded-top-4">
-          <h4 class="mb-0 text-center">Detalles de la Compra</h4>
+      <div class="card border-0 shadow rounded-4">
+        <div class="card-header bg-dark text-white py-3 rounded-top-4">
+          <h4 class="mb-0 text-center fw-semibold">Confirmación de Compra</h4>
         </div>
-        <div class="card-body p-4">
+        <div class="card-body px-5 py-4 bg-light-subtle">
 
           <form method="post" action="{% url 'procesar_checkout' %}">
-
             {% csrf_token %}
 
             <!-- Tipo de entrega -->
             <div class="mb-4">
-              <label class="form-label fw-semibold">¿Cómo deseas recibir tu pedido?</label>
+              <label class="form-label fw-semibold text-dark">Tipo de Entrega</label>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="tipo_entrega" id="retiro" value="retiro" checked>
-                <label class="form-check-label" for="retiro">
-                  Retiro en tienda
+                <label class="form-check-label text-secondary" for="retiro">
+                  Retiro en tienda (sin costo adicional)
                 </label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="tipo_entrega" id="envio" value="envio">
-                <label class="form-check-label" for="envio">
+                <label class="form-check-label text-secondary" for="envio">
                   Envío a domicilio
                 </label>
               </div>
             </div>
 
-            <!-- Dirección (solo visible si elige envío) -->
+            <!-- Dirección -->
             <div class="mb-4" id="direccionGrupo" style="display: none;">
-              <label for="direccion" class="form-label">Dirección de envío</label>
-              <input type="text" class="form-control" name="direccion" id="direccion" placeholder="Ej: Av. Providencia 1234" />
+              <label for="direccion" class="form-label text-dark">Dirección de Envío</label>
+              <input type="text" class="form-control" name="direccion" id="direccion"
+                     placeholder="Ej: Av. Providencia 1234, Santiago">
             </div>
 
             <!-- Teléfono -->
             <div class="mb-4">
-              <label for="telefono" class="form-label">Teléfono de contacto</label>
-              <input type="text" class="form-control" name="telefono" id="telefono" placeholder="+56 9 1234 5678" required>
+              <label for="telefono" class="form-label text-dark">Teléfono de Contacto</label>
+              <input type="tel" class="form-control" name="telefono" id="telefono"
+                     placeholder="+56 9 1234 5678" required pattern="^\+56\s9\s\d{4}\s\d{4}$">
+              <small class="form-text text-muted">Formato: +56 9 XXXX XXXX</small>
             </div>
 
-            <!-- Botón -->
-            <div class="text-center">
-              <button type="submit" class="btn btn-success btn-lg w-100">
-                <i class="bi bi-credit-card-2-front me-2"></i> Ir al pago
+            <!-- Botón continuar -->
+            <div class="d-grid">
+              <button type="submit" class="btn btn-outline-dark btn-lg rounded-3 shadow-sm">
+                <i class="bi bi-credit-card-2-front me-2"></i> Continuar con el Pago
               </button>
             </div>
           </form>
@@ -61,7 +63,6 @@
 </div>
 
 <script>
-  // Mostrar u ocultar campo dirección según tipo de entrega
   document.addEventListener("DOMContentLoaded", function () {
     const retiro = document.getElementById("retiro");
     const envio = document.getElementById("envio");
@@ -73,6 +74,8 @@
 
     retiro.addEventListener("change", toggleDireccion);
     envio.addEventListener("change", toggleDireccion);
+
+    toggleDireccion();  // Activar al cargar la página
   });
 </script>
 
