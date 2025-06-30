@@ -5,11 +5,10 @@
     ¿Estás seguro que deseas eliminar <strong>{{ producto.nombre }}</strong>?
   </p>
   <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger w-100 mb-2">Eliminar</button>
-    <a href="{% url 'admin_custom' %}" class="btn btn-secondary w-100"
-      >Cancelar</a
-    >
-  </form>
+  {% csrf_token %}
+  <p>¿Seguro que quieres eliminar el producto "{{ producto.nombre }}"?</p>
+  <button type="submit" class="btn btn-danger">Eliminar</button>
+  <a href="{% url 'admin_custom' %}" class="btn btn-secondary">Cancelar</a>
+</form>
 </div>
 {% endblock %}

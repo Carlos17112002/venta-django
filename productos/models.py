@@ -118,3 +118,12 @@ class Venta(models.Model):
             self.total = self.producto.precio * Decimal(self.cantidad)
         super().save(*args, **kwargs)
 
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    rut = models.CharField(max_length=12, blank=True)
+    direccion = models.CharField(max_length=255, blank=True)
+    telefono = models.CharField(max_length=15, blank=True)
+
+    def __str__(self):
+        return f'Perfil de {self.user.username}'

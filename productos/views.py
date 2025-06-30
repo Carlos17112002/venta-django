@@ -44,6 +44,8 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.utils.dateparse import parse_date
 from .models import Venta
+from .forms import UserProfileForm
+
 
 def lista_productos(request):
     filtros = {
@@ -134,15 +136,32 @@ def ver_carrito(request):
     return render(request, 'carrito.html', context)
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from .forms import RegistroForm
+from .models import Profile 
+
 def registro(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegistroForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save(commit=False)
+            user.first_name = form.cleaned_data['nombres']
+            user.last_name = form.cleaned_data['apellidos']
+            user.email = form.cleaned_data['email']
+            user.save()
+
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.rut = form.cleaned_data['rut']
+            profile.direccion = form.cleaned_data['direccion']
+            profile.telefono = form.cleaned_data['telefono']
+            profile.save()
+
             return redirect('login')
     else:
-        form = UserCreationForm()
+        form = RegistroForm()
     return render(request, 'registro.html', {'form': form})
+
 
 
 def mujer(request):
@@ -353,9 +372,14 @@ def login_personalizado(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
+
+        # Verificamos si el usuario existe
+        if not User.objects.filter(username=username).exists():
+            # Usuario no existe, redirigir a registro
+            return redirect('registro')
+
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            # Esto guarda la sesión para cualquier usuario
             login(request, user)
             if user.is_superuser:
                 return redirect('admin_custom')
@@ -402,10 +426,17 @@ def admin_custom(request):
 @login_required
 def perfil_usuario(request):
     user = request.user
+    profile = user.profile
+
     username_form = UsernameForm(instance=user)
+    profile_form = UserProfileForm(instance=profile, initial={
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+    })
     password_form = PasswordChangeForm(user)
-    username_success = False
-    password_success = False
+
+    username_success = password_success = profile_success = False
 
     if request.method == 'POST':
         if 'cambiar_usuario' in request.POST:
@@ -413,6 +444,7 @@ def perfil_usuario(request):
             if username_form.is_valid():
                 username_form.save()
                 username_success = True
+
         elif 'cambiar_contrasena' in request.POST:
             password_form = PasswordChangeForm(user, request.POST)
             if password_form.is_valid():
@@ -420,12 +452,26 @@ def perfil_usuario(request):
                 update_session_auth_hash(request, user)
                 password_success = True
 
+        elif 'actualizar_perfil' in request.POST:
+            profile_form = UserProfileForm(request.POST, instance=profile)
+            if profile_form.is_valid():
+                # Actualiza también campos del modelo User
+                user.first_name = profile_form.cleaned_data['first_name']
+                user.last_name = profile_form.cleaned_data['last_name']
+                user.email = profile_form.cleaned_data['email']
+                user.save()
+                profile_form.save()
+                profile_success = True
+
     return render(request, 'perfil_usuario.html', {
         'username_form': username_form,
+        'profile_form': profile_form,
         'password_form': password_form,
         'username_success': username_success,
         'password_success': password_success,
+        'profile_success': profile_success,
     })
+
 
 
 def marcas(request):

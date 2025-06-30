@@ -37,6 +37,25 @@ class UsernameForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username']
+        
+        
+from django import forms
+from django.contrib.auth.models import User
+from .models import Profile
+from django.contrib.auth.forms import UserCreationForm
+
+
+class UserProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=100, label="Nombre")
+    last_name = forms.CharField(max_length=100, label="Apellido")
+    email = forms.EmailField(label="Correo electrónico")
+    rut = forms.CharField(max_length=12, label="RUT")
+    direccion = forms.CharField(max_length=255, label="Dirección")
+    telefono = forms.CharField(max_length=20, label="Teléfono")
+
+    class Meta:
+        model = Profile
+        fields = ['rut', 'direccion', 'telefono']
 
 
 class CheckoutForm(forms.Form):
@@ -70,4 +89,14 @@ class CheckoutForm(forms.Form):
             self.add_error('direccion', "Debe ingresar una dirección para el envío a domicilio.")
             
             
-            
+class RegistroForm(UserCreationForm):
+    nombres = forms.CharField(max_length=100, required=True, label="Nombres")
+    apellidos = forms.CharField(max_length=100, required=True, label="Apellidos")
+    email = forms.EmailField(required=True)
+    rut = forms.CharField(max_length=12, required=True)
+    direccion = forms.CharField(max_length=255, required=True)
+    telefono = forms.CharField(max_length=20, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password1', 'password2', 'nombres', 'apellidos', 'email', 'rut', 'direccion', 'telefono']

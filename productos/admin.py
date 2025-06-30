@@ -20,10 +20,24 @@ class ColorAdmin(admin.ModelAdmin):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'categoria', 'precio', 'stock')
-    list_filter = ('categoria',)
+    list_display = ('nombre', 'categoria', 'precio', 'stock', 'creador')
+    list_filter = ('categoria', 'creador')
     search_fields = ('nombre', 'marca')
     filter_horizontal = ('tallas', 'colores')
+    readonly_fields = ('creador',)  # Para que el creador se vea pero no se pueda editar
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        # Solo muestra productos creados por el usuario logueado
+        return qs.filter(creador=request.user)
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            # Asigna el usuario logueado como creador al crear un producto
+            obj.creador = request.user
+        obj.save()
     
     
 class ProductoForm(forms.ModelForm):
