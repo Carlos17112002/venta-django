@@ -35,28 +35,73 @@
     }
 
     .navbar-custom .nav-link {
-      color: #d3d3d3;
-      font-weight: 500;
-      transition: color 0.3s ease;
+    color: #d3d3d3;
+    font-weight: 1000; /* más gruesa */
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .navbar-custom .nav-link:hover {
+    color: #ffffff;
+  }
+
+  /* Efecto de subrayado animado */
+  .navbar-custom .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background-color: #ffffff;
+    transition: width 0.3s ease;
+  }
+
+    .navbar-custom .nav-link:hover::after {
+      width: 100%;
     }
 
-    .navbar-custom .nav-link:hover {
-      color: #ffffff;
-    }
+
+    
 
     .navbar-custom .btn-outline-secondary,
     .navbar-custom .btn-outline-danger,
     .navbar-custom .btn-outline-dark {
       border-color: #ced4da;
       color: #f8f9fa;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .navbar-custom .btn-outline-secondary::before,
+    .navbar-custom .btn-outline-danger::before,
+    .navbar-custom .btn-outline-dark::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background-color: #1b263b;
+      z-index: -1;
+      transition: all 0.3s ease;
+    }
+
+    .navbar-custom .btn-outline-secondary:hover::before,
+    .navbar-custom .btn-outline-danger:hover::before,
+    .navbar-custom .btn-outline-dark:hover::before {
+      left: 0;
     }
 
     .navbar-custom .btn-outline-secondary:hover,
     .navbar-custom .btn-outline-danger:hover,
     .navbar-custom .btn-outline-dark:hover {
-      background-color: #1b263b;
       color: #ffffff;
     }
+
 
     .navbar-custom .btn-ventas {
       background-color: #198754;
@@ -109,7 +154,7 @@
   <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'lista_productos' %}">
-  <img src="{% static 'img/logo.jpg' %}" alt="Medicals" style="height: 60px;">
+  <img src="{% static 'img/logo.jpg' %}" alt="Medicals" style="height: 100px;">
 </a>
 
       <button
