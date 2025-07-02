@@ -48,7 +48,6 @@ from .forms import UserProfileForm
 
 
 def lista_productos(request):
-    # --- Filtros desde la URL ---
     filtros = {
         'q': request.GET.get('q', '').strip(),
         'categoria': request.GET.get('categoria', '').strip(),
@@ -57,10 +56,8 @@ def lista_productos(request):
         'precio_max': request.GET.get('precio_max', '').strip(),
     }
 
-    # --- Consulta base ---
     productos = Producto.objects.all()
 
-    # --- Filtros aplicados ---
     if filtros['q']:
         productos = productos.filter(nombre__icontains=filtros['q'])
     if filtros['categoria']:
@@ -78,34 +75,29 @@ def lista_productos(request):
         except ValueError:
             pass
 
-    # --- Relaciones de tallas y colores (pre-cargadas si es posible) ---
     for producto in productos:
         producto.lista_tallas = producto.tallas.all()
         producto.lista_colores = producto.colores.all()
+        producto.precio_formateado = f"{int(producto.precio):,}".replace(",", ".")
 
-    # --- Marcas únicas (ordenadas) ---
     marcas = Producto.objects.values_list('marca', flat=True)\
         .distinct().exclude(marca__isnull=True).exclude(marca__exact='').order_by('marca')
 
-    # --- Favoritos del usuario autenticado ---
     if request.user.is_authenticated:
         favoritos_ids = list(request.user.favoritos.values_list('producto_id', flat=True))
     else:
         favoritos_ids = []
 
-    # --- Contexto común ---
     context = {
         'productos': productos,
         'favoritos_ids': favoritos_ids,
         'MEDIA_URL': settings.MEDIA_URL,
     }
 
-    # --- Respuesta AJAX (petición asíncrona) ---
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         html = render_to_string('partials/productos_list.html', context, request=request)
         return JsonResponse({'html': html})
 
-    # --- Render completo (petición inicial o con recarga de página) ---
     return render(request, 'index.html', {
         'productos': productos,
         'categorias': Producto.CATEGORIAS,
@@ -114,6 +106,7 @@ def lista_productos(request):
         'favoritos_ids': favoritos_ids,
         'MEDIA_URL': settings.MEDIA_URL,
     })
+
 
 
 # views.py
@@ -197,6 +190,9 @@ def carrusel(request):
 
 
 def productos_hombre(request):
+    import os
+    from django.conf import settings
+    
     # Parámetros GET
     q = request.GET.get('q', '')
     marca = request.GET.get('marca')
@@ -216,6 +212,10 @@ def productos_hombre(request):
     if precio_max:
         productos = productos.filter(precio__lte=precio_max)
 
+    # Formatear precio para cada producto
+    for producto in productos:
+        producto.precio_formateado = f"{int(producto.precio):,}".replace(",", ".")
+
     # Carrusel de imágenes desde /media/productos/
     media_path = os.path.join(settings.MEDIA_ROOT, 'productos')
     imagenes_carrusel = []
@@ -228,7 +228,8 @@ def productos_hombre(request):
     favoritos_ids = []
     if request.user.is_authenticated:
         favoritos_ids = list(
-            request.user.favoritos.values_list('producto_id', flat=True))
+            request.user.favoritos.values_list('producto_id', flat=True)
+        )
 
     # Obtener marcas disponibles en esta categoría (para el filtro select)
     marcas = Producto.objects.filter(categoria="Hombre")\
@@ -250,22 +251,11 @@ def productos_hombre(request):
     })
 
 
-    return render(request, 'hombre.html', {
-        'productos': productos,
-        'imagenes_carrusel': imagenes_carrusel,
-        'MEDIA_URL': settings.MEDIA_URL,
-        'favoritos_ids': favoritos_ids,
-        'marcas': marcas,
-        'filtros': {
-            'q': q,
-            'marca': marca,
-            'precio_min': precio_min,
-            'precio_max': precio_max,
-        }
-    })
-
 
 def productos_mujer(request):
+    import os
+    from django.conf import settings
+
     # Parámetros GET para filtro
     q = request.GET.get('q', '')
     marca = request.GET.get('marca')
@@ -274,7 +264,6 @@ def productos_mujer(request):
 
     # Filtrar solo categoría Mujer
     productos = Producto.objects.filter(categoria__iexact="Mujer").prefetch_related('imagenes')
-
 
     # Aplicar filtros dinámicos
     if q:
@@ -285,6 +274,10 @@ def productos_mujer(request):
         productos = productos.filter(precio__gte=precio_min)
     if precio_max:
         productos = productos.filter(precio__lte=precio_max)
+
+    # Formatear precio para cada producto
+    for producto in productos:
+        producto.precio_formateado = f"{int(producto.precio):,}".replace(",", ".")
 
     # Imágenes para carrusel
     media_path = os.path.join(settings.MEDIA_ROOT, 'productos')
@@ -298,7 +291,8 @@ def productos_mujer(request):
     favoritos_ids = []
     if request.user.is_authenticated:
         favoritos_ids = list(
-            request.user.favoritos.values_list('producto_id', flat=True))
+            request.user.favoritos.values_list('producto_id', flat=True)
+        )
 
     # Marcas disponibles en Mujer para filtro select
     marcas = Producto.objects.filter(categoria__iexact="Mujer")\
@@ -317,6 +311,7 @@ def productos_mujer(request):
             'precio_max': precio_max,
         }
     })
+
 
 from django.shortcuts import get_object_or_404, redirect
 from .models import Producto, Carrito, ItemCarrito
@@ -547,6 +542,10 @@ def marcas(request):
         except ValueError:
             pass
 
+    # Formatear precios
+    for producto in productos:
+        producto.precio_formateado = f"{int(producto.precio):,}".replace(",", ".")
+
     # Solo marcas únicas
     marcas = Producto.objects.values_list('marca', flat=True).distinct().order_by('marca')
 
@@ -569,6 +568,7 @@ def marcas(request):
         'filtros': filtros,
         'favoritos_ids': favoritos_ids,
     })
+
 
 
 def productos_accesorio(request):
@@ -596,6 +596,10 @@ def productos_accesorio(request):
         except ValueError:
             pass
 
+    # Formatear precios
+    for producto in productos:
+        producto.precio_formateado = f"{int(producto.precio):,}".replace(",", ".")
+
     media_path = os.path.join(settings.MEDIA_ROOT, 'productos')
     imagenes_carrusel = []
     if os.path.exists(media_path):
@@ -605,8 +609,7 @@ def productos_accesorio(request):
 
     favoritos_ids = []
     if request.user.is_authenticated:
-        favoritos_ids = list(
-            request.user.favoritos.values_list('producto_id', flat=True))
+        favoritos_ids = list(request.user.favoritos.values_list('producto_id', flat=True))
 
     marcas = Producto.objects.filter(categoria__iexact="accesorio")\
                 .values_list('marca', flat=True).distinct()
@@ -626,6 +629,7 @@ def productos_accesorio(request):
         return JsonResponse({'html': html})
 
     return render(request, 'accesorios.html', context)
+
 
 
 @login_required

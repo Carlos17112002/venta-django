@@ -108,7 +108,10 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'lista_productos' %}">Medicals</a>
+      <a class="navbar-brand" href="{% url 'lista_productos' %}">
+  <img src="{% static 'img/logo.jpg' %}" alt="Medicals" style="height: 60px;">
+</a>
+
       <button
         class="navbar-toggler"
         type="button"
