@@ -318,6 +318,8 @@ from .models import Producto, Carrito, ItemCarrito
 
 from django.shortcuts import get_object_or_404
 
+from django.shortcuts import redirect
+
 def agregar_al_carrito(request, producto_id):
     if request.method == "POST":
         producto = get_object_or_404(Producto, id=producto_id)
@@ -346,11 +348,15 @@ def agregar_al_carrito(request, producto_id):
             defaults={'cantidad': cantidad}
         )
         if not created:
-            # Si existe, actualizar la cantidad
             item.cantidad += cantidad
             item.save()
 
-        return redirect('ver_carrito')
+        # Guardar indicador de que se agregó correctamente
+        request.session['mostrar_modal'] = True
+
+        # Redirigir al detalle del producto
+        return redirect('producto_detalle', producto_id=producto.id)
+
 
 
 from django.shortcuts import render, get_object_or_404, redirect

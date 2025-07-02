@@ -2,9 +2,6 @@
 {% load static %}
 {% block content %}
 
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Roboto&display=swap" rel="stylesheet">
-
 <style>
   .layout {
     display: flex;
@@ -12,9 +9,10 @@
     margin: 2rem auto;
     gap: 2rem;
     padding: 0 1rem;
+    flex-wrap: nowrap;
   }
 
-  /* Filtro lateral */
+  /* Sidebar fijo en desktop */
   .sidebar {
     width: 250px;
     flex-shrink: 0;
@@ -135,7 +133,38 @@
     color: #dc3545;
     font-size: 1.2rem;
   }
+
+  /* Responsivo para móviles/tablets */
+  @media (max-width: 768px) {
+    .layout {
+      flex-direction: column;
+      padding: 0 0.5rem;
+    }
+    .sidebar {
+      width: 100%;
+      margin-bottom: 1rem;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0.8rem 0.5rem;
+      display: none; /* Oculto inicialmente */
+    }
+    .productos-grid {
+      width: 100%;
+    }
+    /* Botón para mostrar/ocultar filtro en móvil */
+    #btn-toggle-filtro {
+      display: inline-block;
+      margin: 0 auto 1rem;
+      width: 100%;
+      max-width: 300px;
+    }
+  }
 </style>
+
+<!-- Botón toggle filtro visible sólo en móvil -->
+<button id="btn-toggle-filtro" class="btn btn-outline-primary d-md-none">
+  Mostrar/Ocultar Filtro
+</button>
 
 <div class="layout">
   <!-- Filtros -->
@@ -192,8 +221,7 @@
         <div class="card-body">
           <h6 class="card-title">{{ producto.marca }}</h6>
           <h5 class="card-subtitle">{{ producto.nombre }}</h5>
-          <div class="price">${{ producto.precio_formateado }}</div>
-
+          <div class="price">${{ producto.precio|floatformat:0 }}</div>
         </div>
       </div>
     {% empty %}
@@ -203,7 +231,20 @@
 </div>
 
 <script>
+  // Toggle filtro móvil
   document.addEventListener("DOMContentLoaded", function () {
+    const btnToggle = document.getElementById('btn-toggle-filtro');
+    const sidebar = document.querySelector('.sidebar');
+
+    btnToggle.addEventListener('click', () => {
+      if (sidebar.style.display === 'none' || getComputedStyle(sidebar).display === 'none') {
+        sidebar.style.display = 'block';
+      } else {
+        sidebar.style.display = 'none';
+      }
+    });
+
+    // Código para favoritos (si lo tienes)
     document.querySelectorAll(".favorito-btn").forEach(function (btn) {
       btn.addEventListener("click", function (e) {
         e.preventDefault();
@@ -236,7 +277,7 @@
         const cookies = document.cookie.split(";");
         for (let i = 0; i < cookies.length; i++) {
           const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+          if (cookie.substring(0, name.length + 1) === name + "=") {
             cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
             break;
           }
@@ -248,3 +289,4 @@
 </script>
 
 {% endblock %}
+

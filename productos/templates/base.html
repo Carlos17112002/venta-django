@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <title>Medicals</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
 
   <link rel="icon" href="{% static 'img/logo.jpg' %}" type="image/jpg" />
 
@@ -17,28 +18,33 @@
   <!-- Select2 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
+  
+
   <!-- jQuery y Select2 JS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   <style>
-    /* Navbar elegante y formal */
-    .navbar-custom {
-      background-color: #0d1b2a;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+  /* Navbar elegante y formal */
+  .navbar-custom {
+    background-color:rgb(0, 0, 0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
 
-    .navbar-custom .navbar-brand {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 1.3rem;
-    }
+  .navbar-custom .navbar-brand {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+  }
 
-    .navbar-custom .nav-link {
+  .navbar-custom .nav-link {
     color: #d3d3d3;
     font-weight: 1000; /* más gruesa */
-    transition: all 0.3s ease;
     position: relative;
+    transition: color 0.35s ease;
+    padding: 0.5rem 1rem;
   }
 
   .navbar-custom .nav-link:hover {
@@ -50,104 +56,109 @@
     content: '';
     position: absolute;
     left: 0;
-    bottom: 0;
+    bottom: 4px;
     width: 0;
     height: 2px;
     background-color: #ffffff;
-    transition: width 0.3s ease;
+    transition: width 0.35s ease;
+    border-radius: 2px;
   }
 
-    .navbar-custom .nav-link:hover::after {
-      width: 100%;
-    }
+  .navbar-custom .nav-link:hover::after {
+    width: 100%;
+  }
 
+  /* Botones outline con efecto deslizante */
+  .navbar-custom .btn-outline-secondary,
+  .navbar-custom .btn-outline-danger,
+  .navbar-custom .btn-outline-dark {
+    border-color: #ced4da;
+    color: #f8f9fa;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    transition: color 0.3s ease;
+  }
 
-    
+  .navbar-custom .btn-outline-secondary::before,
+  .navbar-custom .btn-outline-danger::before,
+  .navbar-custom .btn-outline-dark::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background-color: #1b263b;
+    z-index: -1;
+    transition: left 0.3s ease;
+    border-radius: 0.25rem;
+  }
 
-    .navbar-custom .btn-outline-secondary,
-    .navbar-custom .btn-outline-danger,
-    .navbar-custom .btn-outline-dark {
-      border-color: #ced4da;
-      color: #f8f9fa;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-    }
+  .navbar-custom .btn-outline-secondary:hover::before,
+  .navbar-custom .btn-outline-danger:hover::before,
+  .navbar-custom .btn-outline-dark:hover::before {
+    left: 0;
+  }
 
-    .navbar-custom .btn-outline-secondary::before,
-    .navbar-custom .btn-outline-danger::before,
-    .navbar-custom .btn-outline-dark::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background-color: #1b263b;
-      z-index: -1;
-      transition: all 0.3s ease;
-    }
+  .navbar-custom .btn-outline-secondary:hover,
+  .navbar-custom .btn-outline-danger:hover,
+  .navbar-custom .btn-outline-dark:hover {
+    color: #ffffff;
+  }
 
-    .navbar-custom .btn-outline-secondary:hover::before,
-    .navbar-custom .btn-outline-danger:hover::before,
-    .navbar-custom .btn-outline-dark:hover::before {
-      left: 0;
-    }
+  /* Botón especial "ventas" */
+  .navbar-custom .btn-ventas {
+    background-color:rgb(209, 209, 31);
+    color: #ffffff;
+    padding: 0.6rem 1.6rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
 
-    .navbar-custom .btn-outline-secondary:hover,
-    .navbar-custom .btn-outline-danger:hover,
-    .navbar-custom .btn-outline-dark:hover {
-      color: #ffffff;
-    }
+  .navbar-custom .btn-ventas:hover {
+    background-color:rgb(134, 150, 8);
+  }
 
+  .navbar-custom .btn-ventas i {
+    font-size: 1rem;
+  }
 
-    .navbar-custom .btn-ventas {
-      background-color: #198754;
-      color: white;
-      padding: 0.6rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-    }
+  /* Sticky footer setup */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
 
-    .navbar-custom .btn-ventas:hover {
-      background-color: #14532d;
-      color: white;
-    }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #ffffff;
+    color: #333333;
+  }
 
-    .navbar-custom .btn-ventas i {
-      font-size: 1rem;
-    }
+  .main-content {
+    flex: 1 0 auto;
+  }
 
-    /* Sticky footer setup */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-    }
+  footer {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #555555;
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05);
+  }
+</style>
 
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    .main-content {
-      flex: 1 0 auto;
-    }
-
-    footer {
-      background-color: #f8f9fa;
-      padding: 1rem 0;
-      text-align: center;
-    }
-  </style>
 </head>
 <body>
   <!-- Navbar -->

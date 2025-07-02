@@ -1,14 +1,24 @@
-{% extends "base.html" %} {% block content %}
-<div class="container mt-5" style="max-width: 500px">
-  <h2 class="mb-4 text-center">Eliminar Producto</h2>
-  <p class="text-center">
-    ¿Estás seguro que deseas eliminar <strong>{{ producto.nombre }}</strong>?
-  </p>
-  <form method="post">
-  {% csrf_token %}
-  <p>¿Seguro que quieres eliminar el producto "{{ producto.nombre }}"?</p>
-  <button type="submit" class="btn btn-danger">Eliminar</button>
-  <a href="{% url 'admin_custom' %}" class="btn btn-secondary">Cancelar</a>
-</form>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="card shadow-sm border-0">
+    <div class="card-body text-center">
+      <h2 class="card-title mb-3 text-danger">Confirmar Eliminación</h2>
+      <p class="mb-4 fs-5">
+        ¿Estás seguro de que deseas eliminar el producto <strong class="text-dark">"{{ producto.nombre }}"</strong>?
+      </p>
+      <form method="post" class="d-flex justify-content-center gap-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger px-4">
+          <i class="bi bi-trash-fill me-1"></i> Eliminar
+        </button>
+        <a href="{% url 'admin_custom' %}" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-x-circle me-1"></i> Cancelar
+        </a>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
+

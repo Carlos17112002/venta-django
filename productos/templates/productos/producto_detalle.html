@@ -4,7 +4,7 @@
 
 <div class="container my-5">
   <div class="row">
-    <!-- Imagen del producto / Carrusel por color -->
+    <!-- Imagen del producto -->
     <div class="col-md-6">
       <div class="image-zoom-container">
         {% for imagen in producto.imagenes.all %}
@@ -24,14 +24,13 @@
       <h2 class="fw-bold">{{ producto.nombre }}</h2>
       <p class="text-primary fw-semibold mb-2">{{ producto.marca }}</p>
       <p class="mb-4">{{ producto.descripcion }}</p>
-
       <h4 class="text-success fw-bold mb-3">${{ producto.precio }}</h4>
 
-      <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+      <form method="post" action="{% url 'agregar_al_carrito' producto.id %}" id="formAgregar">
         {% csrf_token %}
 
         <label for="talla-select">Talla:</label>
-        <select id="talla-select" name="talla" class="form-select mb-2">
+        <select id="talla-select" name="talla" class="form-select mb-2" required>
           {% for talla in tallas %}
             <option value="{{ talla.id }}">{{ talla.nombre }}</option>
           {% empty %}
@@ -40,7 +39,7 @@
         </select>
 
         <label for="color-select">Color:</label>
-        <select id="color-select" name="color" class="form-select mb-2">
+        <select id="color-select" name="color" class="form-select mb-2" required>
           <option value="">-- Selecciona --</option>
           {% for color in colores %}
             <option value="{{ color.id }}">{{ color.nombre }}</option>
@@ -57,10 +56,33 @@
           {% endif %}
         </div>
 
-        <button type="submit" class="btn btn-primary w-100" {% if producto.stock == 0 %}disabled{% endif %}>
+        <button type="submit" class="btn btn-primary w-100" id="agregarBtn" {% if producto.stock == 0 %}disabled{% endif %}>
           Agregar al carrito
         </button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Producto agregado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        El producto <strong>{{ producto.nombre }}</strong> ha sido agregado exitosamente al carrito.
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Seguir comprando
+        </button>
+        <button type="button" class="btn btn-success" id="goToCart">
+          Ir al carrito
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -91,7 +113,7 @@
 }
 </style>
 
-<!-- Script para el zoom y selección de color -->
+<!-- Scripts -->
 <script>
   const img = document.querySelector('.product-image');
   const container = img?.parentElement;
@@ -141,15 +163,30 @@
   // Cambiar imagen según color
   document.getElementById('color-select')?.addEventListener('change', function () {
     const colorId = this.value;
-
     images.forEach(img => {
-      if (img.dataset.color === colorId) {
-        img.classList.remove('d-none');
-      } else {
-        img.classList.add('d-none');
-      }
+      img.classList.toggle('d-none', img.dataset.color !== colorId);
+    });
+  });
+
+  // Interceptar el envío del formulario para mostrar modal
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('formAgregar');
+    const agregarBtn = document.getElementById('agregarBtn');
+    const goToCart = document.getElementById('goToCart');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // Evita que se envíe inmediatamente
+      const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+      modal.show();
+    });
+
+    goToCart.addEventListener('click', () => {
+      window.location.href = "{% url 'ver_carrito' %}";
     });
   });
 </script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 {% endblock %}
