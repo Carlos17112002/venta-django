@@ -224,7 +224,8 @@
         <div class="card-body">
           <h6 class="card-title">{{ producto.marca }}</h6>
           <h5 class="card-subtitle">{{ producto.nombre }}</h5>
-          <div class="price">${{ producto.precio_formateado }}</div>
+          {% load humanize %}
+          <h4 class="text-success fw-bold mb-3">${{ producto.precio|floatformat:0|intcomma }}</h4>
         </div>
       </div>
     {% empty %}

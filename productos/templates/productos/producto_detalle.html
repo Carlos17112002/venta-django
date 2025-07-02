@@ -24,7 +24,10 @@
       <h2 class="fw-bold">{{ producto.nombre }}</h2>
       <p class="text-primary fw-semibold mb-2">{{ producto.marca }}</p>
       <p class="mb-4">{{ producto.descripcion }}</p>
-      <h4 class="text-success fw-bold mb-3">${{ producto.precio }}</h4>
+      {% load humanize %}
+      <h4 class="text-success fw-bold mb-3">${{ producto.precio|floatformat:0|intcomma }}</h4>
+
+
 
       <form method="post" action="{% url 'agregar_al_carrito' producto.id %}" id="formAgregar">
         {% csrf_token %}
@@ -83,7 +86,7 @@
   </div>
 </div>
 
-<!-- Estilos para el zoom y layout -->
+<!-- Estilos para el zoom, borde y layout -->
 <style>
 .image-zoom-container {
   position: relative;
@@ -91,37 +94,90 @@
   width: 100%;
   height: 400px;
   border-radius: 1rem;
+  border: 3px solid #ddd; /* borde gris claro */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  cursor: zoom-in;
   touch-action: none;
+  background-color: #fff;
 }
+
 .image-zoom-container img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   transition: transform 0.3s ease;
   will-change: transform;
-  transform-origin: center center;
+  transform-origin: 0 0;
+  border-radius: 1rem;
 }
-@media (hover: hover) {
-  .image-zoom-container:hover img {
-    transform: scale(2);
+
+@media (hover: hover) and (pointer: fine) {
+  .image-zoom-container.zoomed {
     cursor: zoom-out;
   }
 }
 </style>
 
-<!-- Scripts AJAX y cambio de imagen por color -->
+<!-- Scripts AJAX, cambio de imagen por color, zoom cursor y zoom táctil -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // Cambio de imagen por color
-  const images = document.querySelectorAll('.product-image');
-  document.getElementById('color-select')?.addEventListener('change', function () {
-    const colorId = this.value;
-    images.forEach(img => {
-      img.classList.toggle('d-none', img.dataset.color !== colorId);
-    });
+  const container = document.querySelector('.image-zoom-container');
+  let img = container.querySelector('img');
+
+  // --- Zoom con cursor desktop ---
+  let zoomed = false;
+
+  function onMouseMove(e) {
+    if (!zoomed) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+
+    img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+    img.style.transform = 'scale(2)';
+  }
+
+  container.addEventListener('mouseenter', () => {
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      zoomed = true;
+      container.classList.add('zoomed');
+      img.style.transition = 'transform 0.2s ease';
+      img.style.transform = 'scale(1)';
+    }
   });
 
-  // AJAX para agregar al carrito con modal
+  container.addEventListener('mouseleave', () => {
+    zoomed = false;
+    container.classList.remove('zoomed');
+    img.style.transform = 'scale(1)';
+    img.style.transformOrigin = 'center center';
+  });
+
+  container.addEventListener('mousemove', onMouseMove);
+
+  // --- Cambio de imagen por color ---
+  const images = document.querySelectorAll('.product-image');
+  const colorSelect = document.getElementById('color-select');
+  if(colorSelect){
+    colorSelect.addEventListener('change', function () {
+      const colorId = this.value;
+      images.forEach(image => {
+        image.classList.toggle('d-none', image.dataset.color !== colorId);
+      });
+      // Actualizar la imagen principal para el zoom al cambiar color
+      const visibleImage = document.querySelector('.product-image:not(.d-none)');
+      if(visibleImage){
+        img = visibleImage;
+        resetTouchZoom(); // reset zoom táctil al cambiar imagen
+      }
+    });
+  }
+
+  // --- AJAX para agregar al carrito con modal ---
   const form = document.getElementById('formAgregar');
   const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
   const modalProductoNombre = document.getElementById('modalProductoNombre');
@@ -157,6 +213,81 @@ document.addEventListener('DOMContentLoaded', () => {
   goToCartBtn.addEventListener('click', () => {
     window.location.href = "{% url 'ver_carrito' %}";
   });
+
+
+  // --- Zoom táctil móvil con pinch y arrastre ---
+  // Variables para el pinch zoom táctil
+  let initialDistance = null;
+  let lastScale = 1;
+  let currentScale = 1;
+  let lastX = 0;
+  let lastY = 0;
+  let currentX = 0;
+  let currentY = 0;
+
+  function getDistance(touches) {
+    const [touch1, touch2] = touches;
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function setTransform() {
+    img.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+  }
+
+  function resetTouchZoom() {
+    initialDistance = null;
+    lastScale = 1;
+    currentScale = 1;
+    lastX = 0;
+    lastY = 0;
+    currentX = 0;
+    currentY = 0;
+    img.style.transition = 'transform 0.3s ease';
+    img.style.transform = 'scale(1)';
+    img.style.transformOrigin = 'center center';
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      initialDistance = getDistance(e.touches);
+      lastScale = currentScale;
+    } else if(currentScale > 1 && e.touches.length === 1){
+      // Para arrastrar imagen cuando está zoomed
+      lastX = e.touches[0].clientX - currentX;
+      lastY = e.touches[0].clientY - currentY;
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && initialDistance) {
+      e.preventDefault();
+      const newDistance = getDistance(e.touches);
+      let scale = (newDistance / initialDistance) * lastScale;
+
+      // Limitar escala min 1 y max 3
+      scale = Math.min(Math.max(scale, 1), 3);
+      currentScale = scale;
+      setTransform();
+    } else if (currentScale > 1 && e.touches.length === 1) {
+      // Arrastrar imagen
+      currentX = e.touches[0].clientX - lastX;
+      currentY = e.touches[0].clientY - lastY;
+      setTransform();
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+      initialDistance = null;
+      if(currentScale === 1){
+        resetTouchZoom();
+      }
+    }
+  });
+
 });
 </script>
 

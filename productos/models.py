@@ -80,10 +80,21 @@ class Favorito(models.Model):
         User, on_delete=models.CASCADE, related_name='favoritos')
     producto = models.ForeignKey(
         'Producto', on_delete=models.CASCADE, related_name='favoritos')
+    imagen_principal = models.ImageField(
+        upload_to='favoritos/', blank=True, null=True)
     creado = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('usuario', 'producto')
+
+    def save(self, *args, **kwargs):
+        # Si no tiene imagen principal, la asignamos al guardar
+        if not self.imagen_principal:
+            primera_imagen = self.producto.imagenes.first()
+            if primera_imagen:
+                self.imagen_principal = primera_imagen.imagen
+        super().save(*args, **kwargs)
+
 
 
 class Pedido(models.Model):

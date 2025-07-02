@@ -648,12 +648,21 @@ def productos_accesorio(request):
 def toggle_favorito(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     favorito, creado = Favorito.objects.get_or_create(
-        usuario=request.user, producto=producto)
+        usuario=request.user,
+        producto=producto
+    )
+
     if not creado:
         favorito.delete()
         es_favorito = False
     else:
+        # Asignar imagen principal al crear el favorito
+        primera_imagen = producto.imagenes.first()
+        if primera_imagen:
+            favorito.imagen_principal = primera_imagen.imagen
+            favorito.save()
         es_favorito = True
+
     return JsonResponse({'es_favorito': es_favorito})
 
 
@@ -662,9 +671,17 @@ def toggle_favorito(request, producto_id):
 
 @login_required
 def mis_favoritos(request):
-    favoritos = Favorito.objects.filter(
-        usuario=request.user).select_related('producto')
-    return render(request, 'mis_favoritos.html', {'favoritos': favoritos})
+    favoritos = Favorito.objects.filter(usuario=request.user).select_related('producto').prefetch_related('producto__imagenes')
+
+    # Crear una lista de IDs de productos favoritos para el template (más eficiente que hacer consultas en el template)
+    favoritos_ids = favoritos.values_list('producto_id', flat=True)
+
+    context = {
+        'favoritos': favoritos,
+        'favoritos_ids': list(favoritos_ids),
+    }
+    return render(request, 'mis_favoritos.html', context)
+
 
 
 def eliminar_item_carrito(request, item_id):

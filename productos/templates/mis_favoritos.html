@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+{% load humanize %}
 
 <style>
   .favoritos-container {
@@ -115,14 +116,15 @@
   <div class="favoritos-grid" id="favoritos-lista">
     {% for favorito in favoritos %}
     <div class="card-favorito">
-      {% if favorito.producto.imagen %}
-      <a href="{% url 'producto_detalle' favorito.producto.id %}">
-        <img src="{{ favorito.producto.imagen.url }}" alt="{{ favorito.producto.nombre }}">
-      </a>
+
+      {% if favorito.imagen_principal %}
+        <a href="{% url 'producto_detalle' favorito.producto.id %}">
+          <img src="{{ favorito.imagen_principal.url }}" alt="{{ favorito.producto.nombre }}">
+        </a>
       {% else %}
-      <a href="{% url 'producto_detalle' favorito.producto.id %}">
-        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-      </a>
+        <a href="{% url 'producto_detalle' favorito.producto.id %}">
+          <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+        </a>
       {% endif %}
 
       <button class="favorito-btn" data-producto="{{ favorito.producto.id }}" title="Quitar de favoritos">
@@ -133,7 +135,7 @@
         <div class="marca">{{ favorito.producto.marca }}</div>
         <div class="nombre">{{ favorito.producto.nombre }}</div>
         <div class="descripcion">{{ favorito.producto.descripcion|truncatewords:18 }}</div>
-        <div class="precio">${{ favorito.producto.precio }}</div>
+        <div class="precio">${{ favorito.producto.precio|floatformat:0|intcomma }}</div>
         <a href="{% url 'agregar_al_carrito' favorito.producto.id %}" class="btn-carrito">Agregar al carrito</a>
       </div>
     </div>
