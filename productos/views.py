@@ -48,16 +48,19 @@ from .forms import UserProfileForm
 
 
 def lista_productos(request):
+    # --- Filtros desde la URL ---
     filtros = {
-        'q': request.GET.get('q', ''),
-        'categoria': request.GET.get('categoria', ''),
-        'marca': request.GET.get('marca', ''),
-        'precio_min': request.GET.get('precio_min', ''),
-        'precio_max': request.GET.get('precio_max', ''),
+        'q': request.GET.get('q', '').strip(),
+        'categoria': request.GET.get('categoria', '').strip(),
+        'marca': request.GET.get('marca', '').strip(),
+        'precio_min': request.GET.get('precio_min', '').strip(),
+        'precio_max': request.GET.get('precio_max', '').strip(),
     }
 
+    # --- Consulta base ---
     productos = Producto.objects.all()
 
+    # --- Filtros aplicados ---
     if filtros['q']:
         productos = productos.filter(nombre__icontains=filtros['q'])
     if filtros['categoria']:
@@ -75,29 +78,34 @@ def lista_productos(request):
         except ValueError:
             pass
 
-    # Aquí el procesamiento de tallas y colores:
+    # --- Relaciones de tallas y colores (pre-cargadas si es posible) ---
     for producto in productos:
         producto.lista_tallas = producto.tallas.all()
         producto.lista_colores = producto.colores.all()
 
+    # --- Marcas únicas (ordenadas) ---
     marcas = Producto.objects.values_list('marca', flat=True)\
         .distinct().exclude(marca__isnull=True).exclude(marca__exact='').order_by('marca')
 
+    # --- Favoritos del usuario autenticado ---
     if request.user.is_authenticated:
         favoritos_ids = list(request.user.favoritos.values_list('producto_id', flat=True))
     else:
         favoritos_ids = []
 
+    # --- Contexto común ---
     context = {
         'productos': productos,
         'favoritos_ids': favoritos_ids,
         'MEDIA_URL': settings.MEDIA_URL,
     }
 
+    # --- Respuesta AJAX (petición asíncrona) ---
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         html = render_to_string('partials/productos_list.html', context, request=request)
         return JsonResponse({'html': html})
 
+    # --- Render completo (petición inicial o con recarga de página) ---
     return render(request, 'index.html', {
         'productos': productos,
         'categorias': Producto.CATEGORIAS,
@@ -106,7 +114,6 @@ def lista_productos(request):
         'favoritos_ids': favoritos_ids,
         'MEDIA_URL': settings.MEDIA_URL,
     })
-
 
 
 # views.py
@@ -243,6 +250,21 @@ def productos_hombre(request):
     })
 
 
+    return render(request, 'hombre.html', {
+        'productos': productos,
+        'imagenes_carrusel': imagenes_carrusel,
+        'MEDIA_URL': settings.MEDIA_URL,
+        'favoritos_ids': favoritos_ids,
+        'marcas': marcas,
+        'filtros': {
+            'q': q,
+            'marca': marca,
+            'precio_min': precio_min,
+            'precio_max': precio_max,
+        }
+    })
+
+
 def productos_mujer(request):
     # Parámetros GET para filtro
     q = request.GET.get('q', '')
@@ -251,7 +273,8 @@ def productos_mujer(request):
     precio_max = request.GET.get('precio_max')
 
     # Filtrar solo categoría Mujer
-    productos = Producto.objects.filter(categoria__iexact="Mujer")
+    productos = Producto.objects.filter(categoria__iexact="Mujer").prefetch_related('imagenes')
+
 
     # Aplicar filtros dinámicos
     if q:
@@ -295,7 +318,6 @@ def productos_mujer(request):
         }
     })
 
-
 from django.shortcuts import get_object_or_404, redirect
 from .models import Producto, Carrito, ItemCarrito
 
@@ -336,27 +358,52 @@ def agregar_al_carrito(request, producto_id):
         return redirect('ver_carrito')
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.forms import modelformset_factory
+from .models import Producto, ImagenProducto
+from .forms import ProductoForm, ImagenProductoForm
 
 def editar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id, creador=request.user)
+
+    ImagenProductoFormSet = modelformset_factory(ImagenProducto, form=ImagenProductoForm, extra=1, can_delete=True)
+
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, instance=producto)
-        if form.is_valid():
+        formset = ImagenProductoFormSet(request.POST, request.FILES, queryset=ImagenProducto.objects.filter(producto=producto))
+
+        if form.is_valid() and formset.is_valid():
             producto = form.save(commit=False)
-            producto.save()  # Guardar antes de asignar ManyToMany
-            
-            # Obtener listas de IDs de tallas y colores del formulario
-            tallas_ids = request.POST.getlist('tallas')  # plural, que es el nombre del campo
-            colores_ids = request.POST.getlist('colores') 
-            
-            # Asignar relaciones ManyToMany correctamente
+            producto.save()
+
+            # Actualizar ManyToMany
+            tallas_ids = request.POST.getlist('tallas')
+            colores_ids = request.POST.getlist('colores')
             producto.tallas.set(tallas_ids)
             producto.colores.set(colores_ids)
-            
+
+            # Guardar imágenes (formset)
+            images = formset.save(commit=False)
+            # Asociar producto a cada imagen
+            for img in images:
+                img.producto = producto
+                img.save()
+
+            # Eliminar imágenes marcadas para borrar
+            for obj in formset.deleted_objects:
+                obj.delete()
+
             return redirect('lista_productos')
     else:
         form = ProductoForm(instance=producto)
-    return render(request, 'editar_producto.html', {'form': form, 'producto': producto})
+        formset = ImagenProductoFormSet(queryset=ImagenProducto.objects.filter(producto=producto))
+
+    return render(request, 'editar_producto.html', {
+        'form': form,
+        'formset': formset,
+        'producto': producto,
+    })
+
 
 
 @login_required
@@ -485,30 +532,25 @@ def marcas(request):
 
     if categoria:
         productos = productos.filter(categoria__iexact=categoria)
-
     if q:
         productos = productos.filter(nombre__icontains=q)
-
     if marca:
         productos = productos.filter(marca__iexact=marca)
-
     if precio_min:
         try:
             productos = productos.filter(precio__gte=float(precio_min))
         except ValueError:
             pass
-
     if precio_max:
         try:
             productos = productos.filter(precio__lte=float(precio_max))
         except ValueError:
             pass
 
-    # Obtener marcas para el filtro lateral
-    marcas = Producto.objects.values('marca')\
-        .annotate(total=Count('id'))\
-        .order_by('marca')
+    # Solo marcas únicas
+    marcas = Producto.objects.values_list('marca', flat=True).distinct().order_by('marca')
 
+    # Favoritos del usuario
     favoritos_ids = []
     if request.user.is_authenticated:
         favoritos_ids = list(request.user.favoritos.values_list('producto_id', flat=True))
@@ -677,19 +719,32 @@ from .forms import ProductoForm
 
 from .models import Producto, Talla, Color
 
+@login_required
 def agregar_producto(request):
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES)
-        if form.is_valid():
+        formset = ImagenProductoFormSet(request.POST, request.FILES, queryset=ImagenProducto.objects.none())
+        
+        if form.is_valid() and formset.is_valid():
             producto = form.save(commit=False)
             producto.creador = request.user
             producto.save()
-            form.save_m2m()  # <- Importante para guardar tallas y colores
+            form.save_m2m()  # guarda relaciones ManyToMany (tallas, colores)
+            
+            for imagen_form in formset.cleaned_data:
+                if imagen_form and not imagen_form.get('DELETE', False):
+                    ImagenProducto.objects.create(
+                        producto=producto,
+                        imagen=imagen_form['imagen'],
+                        color=imagen_form.get('color')
+                    )
+            
             return redirect('lista_productos')
     else:
         form = ProductoForm()
-
-    return render(request, 'agregar_producto.html', {'form': form})
+        formset = ImagenProductoFormSet(queryset=ImagenProducto.objects.none())
+    
+    return render(request, 'agregar_producto.html', {'form': form, 'formset': formset})
 
 
 
@@ -813,12 +868,15 @@ def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     tallas = producto.tallas.all()
     colores = producto.colores.all()
+    imagenes = producto.imagenes.all()  # <-- Agregamos esto
 
     return render(request, "productos/producto_detalle.html", {
         "producto": producto,
         "tallas": tallas,
         "colores": colores,
+        "imagenes": imagenes,  # <-- Y lo pasamos al template
     })
+
 
 def lista_productos_hombre(request):
     categoria = 'hombre'
@@ -1098,3 +1156,15 @@ def obtener_carrito(request):
             session_key = request.session.session_key
         carrito, created = Carrito.objects.get_or_create(session_key=session_key)
     return carrito
+
+
+
+from django.forms import modelformset_factory
+from .models import Producto, ImagenProducto
+
+ImagenProductoFormSet = modelformset_factory(
+    ImagenProducto,
+    fields=('imagen', 'color'),
+    extra=3,  # Número de formularios vacíos para subir imágenes nuevas
+    can_delete=True  # Permite borrar imágenes en edición
+)

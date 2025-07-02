@@ -2,6 +2,22 @@ from django import forms
 from .models import Producto
 from django.contrib.auth.models import User
 from .models import Producto, Talla, Color  
+from django import forms
+from .models import Producto, ImagenProducto
+
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = '__all__'
+        # O los campos que uses, por ejemplo:
+        # fields = ['nombre', 'categoria', 'precio', 'stock', 'marca', 'descripcion', 'tallas', 'colores']
+
+class ImagenProductoForm(forms.ModelForm):
+    class Meta:
+        model = ImagenProducto
+        fields = ['imagen', 'color']
+
+
 
 
 class ProductoForm(forms.ModelForm):
@@ -100,3 +116,9 @@ class RegistroForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'password1', 'password2', 'nombres', 'apellidos', 'email', 'rut', 'direccion', 'telefono']
+        
+        
+class ImagenProductoForm(forms.ModelForm):
+    class Meta:
+        model = ImagenProducto
+        fields = ['imagen', 'color']

@@ -2,6 +2,7 @@
 {% load static %}
 {% block content %}
 
+<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Roboto&display=swap" rel="stylesheet">
 
 <style>
@@ -146,9 +147,7 @@
     <select id="marca" name="marca">
       <option value="">Todas</option>
       {% for marca in marcas %}
-        <option value="{{ marca.marca }}" {% if filtros.marca == marca.marca %}selected{% endif %}>
-          {{ marca.marca }} ({{ marca.total }})
-        </option>
+        <option value="{{ marca }}" {% if filtros.marca == marca %}selected{% endif %}>{{ marca }}</option>
       {% endfor %}
     </select>
 
@@ -170,20 +169,22 @@
     {% for producto in productos %}
       <div class="card-eneba">
         {% if user.is_authenticated %}
-        <button class="favorito-btn" data-producto="{{ producto.id }}">
-          {% if producto.id in favoritos_ids %}
-          <i class="bi bi-heart-fill"></i>
-          {% else %}
-          <i class="bi bi-heart" style="color:#888;"></i>
-          {% endif %}
-        </button>
+          <button class="favorito-btn" data-producto="{{ producto.id }}">
+            {% if producto.id in favoritos_ids %}
+              <i class="bi bi-heart-fill"></i>
+            {% else %}
+              <i class="bi bi-heart" style="color:#888;"></i>
+            {% endif %}
+          </button>
         {% endif %}
 
         <a href="{% url 'producto_detalle' producto.id %}">
-          {% if producto.imagen %}
-          <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+          {% if producto.imagenes.all %}
+            <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}">
+          {% elif producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
           {% else %}
-          <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
           {% endif %}
         </a>
 
@@ -245,4 +246,3 @@
 </script>
 
 {% endblock %}
-

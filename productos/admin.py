@@ -3,6 +3,8 @@ from .models import Producto, Carrito, ItemCarrito
 from .models import Producto, Talla, Color
 from django import forms
 from .models import Pedido, ItemPedido
+from .models import ImagenProducto
+
 
 
 
@@ -70,3 +72,10 @@ class PedidoAdmin(admin.ModelAdmin):
     list_filter = ['pagado', 'tipo_entrega']
     search_fields = ['usuario__username', 'telefono']
     inlines = [ItemPedidoInline]
+
+
+
+class ImagenProductoInline(admin.TabularInline):
+    model = ImagenProducto
+    extra = 1
+

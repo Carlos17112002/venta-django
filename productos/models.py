@@ -127,3 +127,15 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
+
+class ImagenProducto(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes')
+    imagen = models.ImageField(upload_to='productos/')
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"Imagen de {self.producto.nombre} - Color: {self.color.nombre if self.color else 'Sin color'}"
+
+
+
+

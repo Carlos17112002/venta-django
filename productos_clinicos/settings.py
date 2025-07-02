@@ -26,8 +26,13 @@ SECRET_KEY = 'django-insecure-gtnf%6tlyrs78rmxu0x$*d^x%74yd6v7#f4w@=+cv2apufof^h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['venta-django-sgja.onrender.com', 'localhost', '127.0.0.1']
-
+ALLOWED_HOSTS = [
+    'medicals.cl',
+    'www.medicals.cl',
+    # también localhost si pruebas localmente
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition

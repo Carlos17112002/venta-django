@@ -34,9 +34,6 @@
           {{ form.marca.label_tag }} {{ form.marca }}
         </div>
         <div class="mb-3">
-          {{ form.imagen.label_tag }} {{ form.imagen }}
-        </div>
-        <div class="mb-3">
           {{ form.descripcion.label_tag }} {{ form.descripcion }}
         </div>
 
@@ -50,11 +47,30 @@
           {{ form.colores }}
         </div>
 
+        <!-- Formset para las imágenes múltiples -->
+        <div class="mb-3">
+          <label class="form-label">Imágenes del producto</label>
+          {{ formset.management_form }}
+          
+          {% for f in formset %}
+            <div class="mb-3 border rounded p-3">
+              {{ f.imagen.label_tag }} {{ f.imagen }}
+              {{ f.color.label_tag }} {{ f.color }}
+              {% if f.instance.pk %}
+                <div class="form-check mt-2">
+                  {{ f.DELETE }} <label class="form-check-label" for="{{ f.DELETE.id_for_label }}">Eliminar</label>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Agregar</button>
         <a href="{% url 'admin_custom' %}" class="btn btn-secondary w-100 mt-2">Cancelar</a>
       </form>
+
       {% if form.errors %}
-        <div class="alert alert-danger">
+        <div class="alert alert-danger mt-3">
           <ul>
             {% for field in form %}
               {% for error in field.errors %}
@@ -87,3 +103,4 @@
 </script>
 
 {% endblock %}
+

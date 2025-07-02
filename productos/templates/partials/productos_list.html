@@ -14,11 +14,15 @@
       {% endif %}
 
       <a href="{% url 'producto_detalle' producto.id %}">
-        {% if producto.imagen %}
-        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-        {% else %}
-        <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-        {% endif %}
+        {% with imagenes=producto.imagenes.all %}
+          {% if imagenes %}
+            <img src="{{ imagenes.0.imagen.url }}" alt="{{ producto.nombre }}">
+          {% elif producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+          {% else %}
+            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+          {% endif %}
+        {% endwith %}
       </a>
 
       <div class="card-body">
