@@ -73,21 +73,17 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body text-center">
-        El producto <strong>{{ producto.nombre }}</strong> ha sido agregado exitosamente al carrito.
+        El producto <strong id="modalProductoNombre"></strong> ha sido agregado exitosamente al carrito.
       </div>
       <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          Seguir comprando
-        </button>
-        <button type="button" class="btn btn-success" id="goToCart">
-          Ir al carrito
-        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Seguir comprando</button>
+        <button type="button" class="btn btn-success" id="goToCart">Ir al carrito</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Estilos para el zoom -->
+<!-- Estilos para el zoom y layout -->
 <style>
 .image-zoom-container {
   position: relative;
@@ -113,77 +109,45 @@
 }
 </style>
 
-<!-- Scripts -->
+<!-- Scripts AJAX y modal -->
 <script>
-  const img = document.querySelector('.product-image');
-  const container = img?.parentElement;
-  const images = document.querySelectorAll('.product-image');
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('formAgregar');
+  const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  const modalProductoNombre = document.getElementById('modalProductoNombre');
+  const goToCartBtn = document.getElementById('goToCart');
 
-  if (container) {
-    container.addEventListener('mousemove', function (e) {
-      if (window.innerWidth > 768) {
-        const rect = container.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        img.style.transformOrigin = `${x}% ${y}%`;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: new FormData(form)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        modalProductoNombre.textContent = data.nombre_producto;
+        modal.show();
+      } else {
+        alert('Error al agregar el producto al carrito.');
       }
-    });
-
-    container.addEventListener('mouseleave', function () {
-      img.style.transformOrigin = 'center center';
-    });
-
-    let scale = 1;
-    let lastDistance = null;
-    container.addEventListener('touchmove', function (e) {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const [touch1, touch2] = e.touches;
-        const distance = Math.hypot(
-          touch2.pageX - touch1.pageX,
-          touch2.pageY - touch1.pageY
-        );
-
-        if (lastDistance) {
-          const delta = distance - lastDistance;
-          scale += delta * 0.005;
-          scale = Math.max(1, Math.min(scale, 3));
-          img.style.transform = `scale(${scale})`;
-        }
-
-        lastDistance = distance;
-      }
-    }, { passive: false });
-
-    container.addEventListener('touchend', function () {
-      lastDistance = null;
-    });
-  }
-
-  // Cambiar imagen según color
-  document.getElementById('color-select')?.addEventListener('change', function () {
-    const colorId = this.value;
-    images.forEach(img => {
-      img.classList.toggle('d-none', img.dataset.color !== colorId);
+    })
+    .catch(() => {
+      alert('Error de red al agregar el producto.');
     });
   });
 
-  // Interceptar el envío del formulario para mostrar modal
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('formAgregar');
-    const agregarBtn = document.getElementById('agregarBtn');
-    const goToCart = document.getElementById('goToCart');
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault(); // Evita que se envíe inmediatamente
-      const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
-      modal.show();
-    });
-
-    goToCart.addEventListener('click', () => {
-      window.location.href = "{% url 'ver_carrito' %}";
-    });
+  goToCartBtn.addEventListener('click', () => {
+    window.location.href = "{% url 'ver_carrito' %}";
   });
+});
 </script>
 
 <!-- Bootstrap JS -->

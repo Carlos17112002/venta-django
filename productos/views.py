@@ -320,6 +320,9 @@ from django.shortcuts import get_object_or_404
 
 from django.shortcuts import redirect
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+
 def agregar_al_carrito(request, producto_id):
     if request.method == "POST":
         producto = get_object_or_404(Producto, id=producto_id)
@@ -339,7 +342,6 @@ def agregar_al_carrito(request, producto_id):
                 session_key = request.session.session_key
             carrito, created = Carrito.objects.get_or_create(session_key=session_key, usuario=None)
 
-        # Buscar si ya existe un item igual
         item, created = ItemCarrito.objects.get_or_create(
             carrito=carrito,
             producto=producto,
@@ -351,11 +353,11 @@ def agregar_al_carrito(request, producto_id):
             item.cantidad += cantidad
             item.save()
 
-        # Guardar indicador de que se agregó correctamente
-        request.session['mostrar_modal'] = True
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'nombre_producto': producto.nombre})
+        else:
+            return redirect('producto_detalle', producto_id=producto.id)
 
-        # Redirigir al detalle del producto
-        return redirect('producto_detalle', producto_id=producto.id)
 
 
 

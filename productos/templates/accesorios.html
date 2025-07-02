@@ -133,7 +133,41 @@
     color: #dc3545;
     font-size: 1.2rem;
   }
+
+  /* Botón toggle filtro en móvil */
+  #btn-toggle-filtro {
+    display: none;
+    margin: 1rem auto;
+    max-width: 300px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .layout {
+      flex-direction: column;
+      padding: 0 0.5rem;
+    }
+    .sidebar {
+      width: 100%;
+      margin-bottom: 1rem;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0.8rem 0.5rem;
+      display: none; /* oculto por defecto */
+    }
+    .productos-grid {
+      width: 100%;
+    }
+    #btn-toggle-filtro {
+      display: block;
+    }
+  }
 </style>
+
+<!-- Botón para mostrar/ocultar filtro en móvil -->
+<button id="btn-toggle-filtro" class="btn btn-outline-primary">
+  Mostrar/Ocultar Filtro
+</button>
 
 <div class="layout">
   <!-- Filtros -->
@@ -176,13 +210,15 @@
         {% endif %}
 
         <a href="{% url 'producto_detalle' producto.id %}">
-          {% if producto.imagenes.all %}
-            <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}">
-          {% elif producto.imagen %}
-            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-          {% else %}
-            <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
-          {% endif %}
+          {% with imagenes=producto.imagenes.all %}
+            {% if imagenes %}
+              <img src="{{ imagenes.0.imagen.url }}" alt="{{ producto.nombre }}">
+            {% elif producto.imagen %}
+              <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+            {% else %}
+              <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen">
+            {% endif %}
+          {% endwith %}
         </a>
 
         <div class="card-body">
@@ -199,6 +235,19 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // Toggle filtro móvil
+    const btnToggle = document.getElementById('btn-toggle-filtro');
+    const sidebar = document.querySelector('.sidebar');
+
+    btnToggle.addEventListener('click', () => {
+      if (sidebar.style.display === 'none' || getComputedStyle(sidebar).display === 'none') {
+        sidebar.style.display = 'block';
+      } else {
+        sidebar.style.display = 'none';
+      }
+    });
+
+    // Favoritos
     document.querySelectorAll(".favorito-btn").forEach(function (btn) {
       btn.addEventListener("click", function (e) {
         e.preventDefault();
