@@ -61,6 +61,18 @@ class ItemCarrito(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre}"
+    
+    @property
+    def subtotal(self):
+        return self.producto.precio * self.cantidad
+
+    def imagen_color(self):
+        # Buscar la primera imagen del producto con el color seleccionado
+        imagen = self.producto.imagenes.filter(color=self.color).first()
+        if imagen:
+            return imagen.imagen.url
+        # Si no hay imagen con ese color, devolver la imagen principal
+        return self.producto.imagen.url if hasattr(self.producto, 'imagen') and self.producto.imagen else ''
 
 
 class Favorito(models.Model):

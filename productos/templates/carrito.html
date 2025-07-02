@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
-{% block content %}
 {% load static humanize %}
 
-
+{% block content %}
 <div class="container mt-5">
   <h2 class="mb-4 text-center">Mi Carrito</h2>
 
@@ -12,13 +10,7 @@
       {% for item in items %}
         <div class="card shadow-sm p-3 d-flex flex-row align-items-center flex-wrap">
           <div class="me-3" style="flex-shrink: 0; width: 120px;">
-            {% if item.producto.imagenes.all %}
-              <img src="{{ item.producto.imagenes.all.0.imagen.url }}" alt="{{ item.producto.nombre }}" class="img-fluid rounded" style="max-height: 100px; object-fit: contain;">
-            {% elif item.producto.imagen %}
-              <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" class="img-fluid rounded" style="max-height: 100px; object-fit: contain;">
-            {% else %}
-              <img src="{% static 'img/placeholder.png' %}" alt="Sin imagen" class="img-fluid rounded" style="max-height: 100px; object-fit: contain;">
-            {% endif %}
+            <img src="{{ item.imagen_color }}" alt="{{ item.producto.nombre }}" class="img-fluid rounded" style="max-height: 100px; object-fit: contain;">
           </div>
 
           <div class="flex-grow-1">
@@ -67,5 +59,4 @@
     <div class="alert alert-info text-center">Tu carrito está vacío.</div>
   {% endif %}
 </div>
-
 {% endblock %}

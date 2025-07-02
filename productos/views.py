@@ -111,6 +111,9 @@ def lista_productos(request):
 
 # views.py
 
+from django.shortcuts import render
+from .models import Carrito
+
 def ver_carrito(request):
     if request.user.is_authenticated:
         carrito = Carrito.objects.filter(usuario=request.user).first()
@@ -134,6 +137,7 @@ def ver_carrito(request):
         'total': total,
     }
     return render(request, 'carrito.html', context)
+
 
 
 from django.shortcuts import render, redirect

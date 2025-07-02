@@ -109,9 +109,19 @@
 }
 </style>
 
-<!-- Scripts AJAX y modal -->
+<!-- Scripts AJAX y cambio de imagen por color -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Cambio de imagen por color
+  const images = document.querySelectorAll('.product-image');
+  document.getElementById('color-select')?.addEventListener('change', function () {
+    const colorId = this.value;
+    images.forEach(img => {
+      img.classList.toggle('d-none', img.dataset.color !== colorId);
+    });
+  });
+
+  // AJAX para agregar al carrito con modal
   const form = document.getElementById('formAgregar');
   const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
   const modalProductoNombre = document.getElementById('modalProductoNombre');
