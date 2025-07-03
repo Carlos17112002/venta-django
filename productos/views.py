@@ -327,6 +327,8 @@ from django.shortcuts import redirect
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 
+from django.http import HttpResponseBadRequest
+
 def agregar_al_carrito(request, producto_id):
     if request.method == "POST":
         producto = get_object_or_404(Producto, id=producto_id)
@@ -361,6 +363,10 @@ def agregar_al_carrito(request, producto_id):
             return JsonResponse({'success': True, 'nombre_producto': producto.nombre})
         else:
             return redirect('producto_detalle', producto_id=producto.id)
+
+    # <-- Este bloque soluciona el problema
+    return HttpResponseBadRequest("Solo se permiten peticiones POST")
+
 
 
 
