@@ -140,7 +140,7 @@
         <div class="nombre">{{ favorito.producto.nombre }}</div>
         <div class="descripcion">{{ favorito.producto.descripcion|truncatewords:18 }}</div>
         <div class="precio">${{ favorito.producto.precio|floatformat:0|intcomma }}</div>
-        <a href="{% url 'agregar_al_carrito' favorito.producto.id %}" class="btn-carrito">Agregar al carrito</a>
+        
       </div>
     </div>
     {% empty %}
